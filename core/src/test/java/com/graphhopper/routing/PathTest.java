@@ -49,6 +49,7 @@ public class PathTest {
     private final BooleanEncodedValue carAccessEnc = encoder.getAccessEnc();
     private final DecimalEncodedValue carAvSpeedEnv = encoder.getAverageSpeedEnc();
     private final EncodingManager dataFlagManager = GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).add(dataFlagEncoder).build();
+    private final IntsRef edgeFlags = dataFlagManager.createEdgeFlags();
     private final EncodingManager mixedEncoders = EncodingManager.create(new CarFlagEncoder(), new FootFlagEncoder());
     private final BooleanEncodedValue mixedManagerRoundabout = mixedEncoders.getBooleanEncodedValue(Roundabout.KEY);
     private final TranslationMap trMap = TranslationMapTest.SINGLETON;
@@ -807,12 +808,12 @@ public class PathTest {
         ReaderWay w = new ReaderWay(1);
         w.setTag("highway", "tertiary");
 
-        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w,
-                EncodingManager.Access.WAY, 0));
-        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w,
-                EncodingManager.Access.WAY, 0));
-        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(dataFlagManager.createEdgeFlags(), w,
-                EncodingManager.Access.WAY, 0));
+        g.edge(1, 2, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
+                EncodingManager.Access.WAY));
+        g.edge(2, 4, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
+                EncodingManager.Access.WAY));
+        g.edge(2, 3, 5, true).setFlags(dataFlagEncoder.handleWayTags(edgeFlags, w,
+                EncodingManager.Access.WAY));
 
         Path p = new Dijkstra(g, new GenericWeighting(dataFlagEncoder, new HintsMap()), TraversalMode.NODE_BASED).calcPath(1, 3);
         assertTrue(p.isFound());
@@ -900,17 +901,18 @@ public class PathTest {
         tmpEdge = g.edge(1, 2, 5, true).setName("1-2");
         EncodingManager.AcceptWay map = new EncodingManager.AcceptWay();
         assertTrue(carManager.acceptWay(w, map));
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        IntsRef relFlags = carManager.createRelationFlags();
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
         tmpEdge = g.edge(4, 5, 5, true).setName("4-5");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "100");
         tmpEdge = g.edge(2, 3, 5, true).setName("2-3");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         w.setTag("maxspeed", "10");
         tmpEdge = g.edge(3, 4, 10, true).setName("3-4");
-        tmpEdge.setFlags(carManager.handleWayTags(w, map, 0));
+        tmpEdge.setFlags(carManager.handleWayTags(w, map, relFlags));
 
         return g;
     }
