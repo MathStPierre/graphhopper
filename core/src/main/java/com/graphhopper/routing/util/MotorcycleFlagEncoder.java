@@ -295,10 +295,7 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         if (super.supports(feature))
             return true;
 
-        if (CurvatureWeighting.class.isAssignableFrom(feature))
-            return true;
-
-        return PriorityWeighting.class.isAssignableFrom(feature);
+        return CurvatureWeighting.class.isAssignableFrom(feature);
     }
 
     @Override

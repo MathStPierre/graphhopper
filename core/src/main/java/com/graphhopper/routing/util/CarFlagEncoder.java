@@ -286,10 +286,11 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         }
 
         PriorityCode priority = PriorityCode.BEST;
-
         for (String restriction : restrictions) {
-            if (way.hasTag(restriction, avoidAccessAtAllCosts))
+            if (way.hasTag(restriction, avoidAccessAtAllCosts)) {
                 priority = PriorityCode.AVOID_AT_ALL_COSTS;
+                break;
+            }
         }
         priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(priority.getValue()));
 
