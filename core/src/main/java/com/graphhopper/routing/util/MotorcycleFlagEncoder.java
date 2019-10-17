@@ -42,7 +42,6 @@ import static com.graphhopper.routing.util.EncodingManager.getKey;
 public class MotorcycleFlagEncoder extends CarFlagEncoder {
     private final HashSet<String> avoidSet = new HashSet<>();
     private final HashSet<String> preferSet = new HashSet<>();
-    private DecimalEncodedValue priorityWayEncoder;
     private DecimalEncodedValue curvatureEncoder;
 
     public MotorcycleFlagEncoder() {
@@ -134,7 +133,6 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
 
-        registerNewEncodedValue.add(priorityWayEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
         registerNewEncodedValue.add(curvatureEncoder = new UnsignedDecimalEncodedValue(getKey(prefix, "curvature"), 4, 0.1, false));
     }
 
@@ -225,14 +223,14 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
             setSpeed(true, edgeFlags, ferrySpeed);
         }
 
-        priorityWayEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(priorityFromRelation, way)));
+        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(handlePriority(way)));
 
         // Set the curvature to the Maximum
         curvatureEncoder.setDecimal(false, edgeFlags, PriorityCode.getFactor(10));
         return edgeFlags;
     }
 
-    private int handlePriority(long relationFlags, ReaderWay way) {
+    private int handlePriority(ReaderWay way) {
         String highway = way.getTag("highway", "");
         if (avoidSet.contains(highway)) {
             return PriorityCode.WORST.getValue();
@@ -297,9 +295,8 @@ public class MotorcycleFlagEncoder extends CarFlagEncoder {
         if (super.supports(feature))
             return true;
 
-        if (CurvatureWeighting.class.isAssignableFrom(feature)) {
+        if (CurvatureWeighting.class.isAssignableFrom(feature))
             return true;
-        }
 
         return PriorityWeighting.class.isAssignableFrom(feature);
     }

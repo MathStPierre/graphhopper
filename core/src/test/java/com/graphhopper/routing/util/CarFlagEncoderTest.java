@@ -19,7 +19,10 @@ package com.graphhopper.routing.util;
 
 import com.graphhopper.reader.ReaderNode;
 import com.graphhopper.reader.ReaderWay;
-import com.graphhopper.routing.profiles.*;
+import com.graphhopper.routing.profiles.BooleanEncodedValue;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
+import com.graphhopper.routing.profiles.EncodedValue;
+import com.graphhopper.routing.profiles.Roundabout;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
@@ -31,6 +34,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
+import static com.graphhopper.routing.util.PriorityCode.BEST;
 import static org.junit.Assert.*;
 
 /**
@@ -41,6 +45,7 @@ public class CarFlagEncoderTest {
             new BikeFlagEncoder(), new FootFlagEncoder()));
     private final CarFlagEncoder encoder = (CarFlagEncoder) em.getEncoder("car");
     private final BooleanEncodedValue roundaboutEnc = em.getBooleanEncodedValue(Roundabout.KEY);
+    private final DecimalEncodedValue priorityEnc = em.getDecimalEncodedValue(EncodingManager.getKey(encoder.toString(), "priority"));
     private final DecimalEncodedValue avSpeedEnc = encoder.getAverageSpeedEnc();
     private final BooleanEncodedValue accessEnc = encoder.getAccessEnc();
 
@@ -210,11 +215,12 @@ public class CarFlagEncoderTest {
     public void testDestinationTag() {
         ReaderWay way = new ReaderWay(1);
         way.setTag("highway", "secondary");
-        assertEquals(60, encoder.getSpeed(way), 1e-1);
+        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        assertEquals(1.0, priorityEnc.getDecimal(false, flags), 1e-1);
 
         way.setTag("vehicle", "destination");
-        IntsRef flags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.getAccess(way), 0);
-        assertEquals(5, avSpeedEnc.getDecimal(false, flags), 1e-1);
+        flags = encoder.handleWayTags(em.createEdgeFlags(), way, encoder.getAccess(way), 0);
+        assertEquals(1.0 / BEST.getValue(), priorityEnc.getDecimal(false, flags), 1e-1);
     }
 
     @Test

@@ -20,13 +20,17 @@ package com.graphhopper.routing.util;
 import com.graphhopper.reader.OSMTurnRelation;
 import com.graphhopper.reader.ReaderRelation;
 import com.graphhopper.reader.ReaderWay;
+import com.graphhopper.routing.profiles.DecimalEncodedValue;
 import com.graphhopper.routing.profiles.EncodedValue;
 import com.graphhopper.routing.profiles.UnsignedDecimalEncodedValue;
+import com.graphhopper.routing.weighting.PriorityWeighting;
 import com.graphhopper.storage.IntsRef;
 import com.graphhopper.util.Helper;
 import com.graphhopper.util.PMap;
 
 import java.util.*;
+
+import static com.graphhopper.routing.util.EncodingManager.getKey;
 
 /**
  * Defines bit layout for cars. (speed, access, ferries, ...)
@@ -37,13 +41,12 @@ import java.util.*;
 public class CarFlagEncoder extends AbstractFlagEncoder {
     protected final Map<String, Integer> trackTypeSpeedMap = new HashMap<>();
     protected final Set<String> badSurfaceSpeedMap = new HashSet<>();
+    protected final Set<String> avoidAccessAtAllCosts = new HashSet<>();
 
     // This value determines the maximal possible on roads with bad surfaces
     protected int badSurfaceSpeed;
-
-    // This value determines the speed for roads with access=destination
-    protected int destinationSpeed;
     protected boolean speedTwoDirections;
+    protected DecimalEncodedValue priorityEnc;
     /**
      * A map which associates string to speed. Get some impression:
      * http://www.itoworld.com/map/124#fullscreen
@@ -80,6 +83,8 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         restrictedValues.add("delivery");
         restrictedValues.add("military");
         restrictedValues.add("emergency");
+        // here subclasses could add private or delivery
+        avoidAccessAtAllCosts.add("destination");
 
         intendedValues.add("yes");
         intendedValues.add("permissive");
@@ -143,7 +148,6 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
 
         // limit speed on bad surfaces to 30 km/h
         badSurfaceSpeed = 30;
-        destinationSpeed = 5;
         maxPossibleSpeed = 140;
         speedDefault = defaultSpeedMap.get("secondary");
 
@@ -163,6 +167,7 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         // first two bits are reserved for route handling in superclass
         super.createEncodedValues(registerNewEncodedValue, prefix, index);
         registerNewEncodedValue.add(speedEncoder = new UnsignedDecimalEncodedValue(EncodingManager.getKey(prefix, "average_speed"), speedBits, speedFactor, speedTwoDirections));
+        registerNewEncodedValue.add(priorityEnc = new UnsignedDecimalEncodedValue(getKey(prefix, "priority"), 3, PriorityCode.getFactor(1), false));
     }
 
     protected double getSpeed(ReaderWay way) {
@@ -280,14 +285,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
                 setSpeed(true, edgeFlags, ferrySpeed);
         }
 
+        PriorityCode priority = PriorityCode.BEST;
+
         for (String restriction : restrictions) {
-            if (way.hasTag(restriction, "destination")) {
-                // This is problematic as Speed != Time
-                setSpeed(false, edgeFlags, destinationSpeed);
-                if (speedTwoDirections)
-                    setSpeed(true, edgeFlags, destinationSpeed);
-            }
+            if (way.hasTag(restriction, avoidAccessAtAllCosts))
+                priority = PriorityCode.AVOID_AT_ALL_COSTS;
         }
+        priorityEnc.setDecimal(false, edgeFlags, PriorityCode.getFactor(priority.getValue()));
+
         return edgeFlags;
     }
 
@@ -327,6 +332,14 @@ public class CarFlagEncoder extends AbstractFlagEncoder {
         if (badSurfaceSpeed > 0 && speed > badSurfaceSpeed && way.hasTag("surface", badSurfaceSpeedMap))
             speed = badSurfaceSpeed;
         return speed;
+    }
+
+    @Override
+    public boolean supports(Class<?> feature) {
+        if (super.supports(feature))
+            return true;
+
+        return PriorityWeighting.class.isAssignableFrom(feature);
     }
 
     @Override

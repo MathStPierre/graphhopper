@@ -278,19 +278,19 @@ public class GraphHopperIT {
                 setEncodingManager(GHUtility.addDefaultEncodedValues(new EncodingManager.Builder()).addAll(new DefaultFlagEncoderFactory(), "car,generic").build());
         tmpHopper.importOrLoad();
 
-        GHRequest req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
+        GHRequest req = new GHRequest(49.985307, 11.50628, 49.98678, 11.508479).
                 setVehicle("car").setWeighting("fastest");
 
         GHResponse rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(550, rsp.getBest().getDistance(), 1);
+        assertEquals(412, rsp.getBest().getDistance(), 1);
 
-        req = new GHRequest(49.985307, 11.50628, 49.985731, 11.507465).
+        req = new GHRequest(49.985307, 11.50628, 49.98678, 11.508479).
                 setVehicle("generic").setWeighting("generic");
 
         rsp = tmpHopper.route(req);
         assertFalse(rsp.getErrors().toString(), rsp.hasErrors());
-        assertEquals(550, rsp.getBest().getDistance(), 1);
+        assertEquals(412, rsp.getBest().getDistance(), 1);
     }
 
     @Test
