@@ -39,6 +39,8 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.swing.text.html.Option;
@@ -64,6 +66,7 @@ public final class PtRouteResource {
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final TripFromLabel tripFromLabel;
+	private Logger logger = LoggerFactory.getLogger(getClass());
 
     private static GtfsGraphLogger GH_GTFS_GRAPH_LOGGER_REVERSE = null;
     private static GtfsGraphLogger GH_GTFS_GRAPH_LOGGER_FORWARD = null;
@@ -294,12 +297,17 @@ public final class PtRouteResource {
             Comparator<PathWrapper> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
             Comparator<PathWrapper> d = Comparator.comparingDouble(PathWrapper::getTime);
             response.getAll().sort(c.thenComparing(d));
+
         }
 
         private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
             StopWatch stopWatch = new StopWatch().start();
+
+            StopWatch stopWatchStep1 = new StopWatch().start();
+
             final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, walkSpeedKmH, false);
             boolean reverse = !arriveBy;
+
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
             stationRouter.setBetaWalkTime(betaWalkTime);
@@ -322,6 +330,11 @@ public final class PtRouteResource {
             for (Label stationLabel : stationLabels) {
                 reverseSettledSet.put(stationLabel.adjNode, stationLabel);
             }
+
+            stopWatchStep1.stop();
+            logger.info("step1 duration: " + stopWatchStep1.getSeconds());
+
+            StopWatch stopWatchStep2 = new StopWatch().start();
 
             GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, walkSpeedKmH, false);
             List<Label> discoveredSolutions = new ArrayList<>();
@@ -391,8 +404,14 @@ public final class PtRouteResource {
                 }
             }
 
+			stopWatchStep2.stop();
+            logger.info("step2 duration: " + stopWatchStep2.getSeconds());
+
             Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
             Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> log.exportGraphmlToFile());
+
+			StopWatch stopWatchStep3 = new StopWatch();
+            stopWatchStep3.start();
 
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
@@ -419,6 +438,9 @@ public final class PtRouteResource {
                 }
             }
 
+            stopWatchStep3.stop();
+            logger.info("step3 duration: " + stopWatchStep3.getSeconds());
+
             visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
             if (discoveredSolutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
@@ -432,14 +454,16 @@ public final class PtRouteResource {
 
             //exportPathsToGraphMl(paths);
 
-            List<Label.Transition> path = paths.get(0);
+            if (GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER != null) {
+                List<Label.Transition> path = paths.get(0);
 
-            path.forEach(t -> {
-                Label.logLabel(GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER, t.label, false, ptEncodedValues, queryGraph);
+                path.forEach(t -> {
+                    Label.logLabel(GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER, t.label, false, ptEncodedValues, queryGraph);
                 });
 
-            GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER.exportGraphmlToFile();
-//
+                GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER.exportGraphmlToFile();
+            }
+    //
 //            Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
 
 

@@ -219,12 +219,14 @@ public class Label {
                     break;
             }
 
-            logger.addNode(edgeIteratorState.getBaseNode(), 0, 0, baseNodeType, "");
-            logger.addNode(edgeIteratorState.getAdjNode(), 0, 0, adjNodeType, "");
+
+
+            logger.addNode(edgeIteratorState.getBaseNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), baseNodeType, "");
+            logger.addNode(edgeIteratorState.getAdjNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getAdjNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getAdjNode()), adjNodeType, "");
             logger.addEdge(edgeLabelStr, edgeIteratorState.getEdge(), edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode());
         }
         else {
-            logger.addNode(label.adjNode, 0, 0, GtfsGraphLogger.NodeLogType.OSM_NODE, "");
+            //logger.addNode(label.adjNode, queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), GtfsGraphLogger.NodeLogType.OSM_NODE, "");
         }
     }
 }

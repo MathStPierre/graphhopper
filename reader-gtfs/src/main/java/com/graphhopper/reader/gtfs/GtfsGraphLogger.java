@@ -20,7 +20,9 @@ package com.graphhopper.reader.gtfs;
 
 import java.awt.Color;
 
+import java.io.BufferedWriter;
 import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 
 import java.lang.Integer;
@@ -82,16 +84,18 @@ public class GtfsGraphLogger {
     private Document dom;
     private Element graphEle;
     private String graphmlPath;
+    private boolean outputCsv = true;
+    BufferedWriter csvReportWriter = null;
 
     class NodeInfo {
 
-        NodeInfo(int xPos, int yPos) {
+        NodeInfo(double xPos, double yPos) {
             this.xPos = xPos;
             this.yPos = yPos;
         }
 
-        public int xPos;
-        public int yPos;
+        public double xPos;
+        public double yPos;
     }
 
     private final Map<String, NodeInfo> insertedNodes = new HashMap<>();
@@ -135,13 +139,41 @@ public class GtfsGraphLogger {
 
     public GtfsGraphLogger(String graphmlPath) throws ParserConfigurationException {
 
+        this.graphmlPath = graphmlPath;
         findNextTripColor();
+        resetLogger();
+    }
+
+    private void writeToCsv(String text) {
+
+        if (!outputCsv ){
+            return;
+        }
+
+        if (csvReportWriter == null) {
+
+            try {
+                csvReportWriter = new BufferedWriter(new FileWriter(graphmlPath + ".csv"));
+                csvReportWriter.write("NodeId,Lng,Lat\n");
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
 
         try {
-            this.graphmlPath = graphmlPath;
+            csvReportWriter.write(text);
+        }
+        catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
+    private void resetLogger() throws ParserConfigurationException {
+
+        try {
             String val = System.getenv("GTFS_GRAPH_LOGGER_Y_SPACE_SCALE");
-            
+
             if (val != null) {
                 int spaceYScaleFactor = Integer.parseInt(val);
 
@@ -172,6 +204,8 @@ public class GtfsGraphLogger {
         catch (Exception e) {
         }
 
+        insertedNodes.clear();
+
         dbf = DocumentBuilderFactory.newInstance();
         db = dbf.newDocumentBuilder();
         dom = db.newDocument();
@@ -198,19 +232,19 @@ public class GtfsGraphLogger {
         dom.appendChild(rootEle);
     }
 
-    private int getXPos(NodeLogType type) {
+    private double getXPos(NodeLogType type) {
 
         switch (type) {
             case OSM_NODE: return currentXPos;
             case ENTER_EXIT_PT: return currentXPos;
             case BOARD_NODE: return currentXPos + BOARD_NODE_X_DISTANCE_FROM_CURRENT;
             case ARRIVAL_STOP_TIME_NODE: {
-                int x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
+                double x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
                 currentXPos += DEPARTURE_TIME_NODE_X_DISTANCE_INCREMENT;
                 return x;
             }
             case DEPARTURE_STOP_TIME_NODE: {
-                int x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
+                double x = currentXPos + TIME_NODE_X_DISTANCE_FROM_CURRENT;
                 currentXPos += ARRIVAL_TIME_NODE_X_DISTANCE_INCREMENT;
                 return x;
             }
@@ -221,7 +255,7 @@ public class GtfsGraphLogger {
         return currentXPos;
     }
 
-    private int getYPos(NodeLogType type) {
+    private double getYPos(NodeLogType type) {
 
         int yBasePos = currentTripIndex * TRIP_HEIGHT_SPACE;
 
@@ -267,10 +301,14 @@ public class GtfsGraphLogger {
             return;
         }
 
+        writeToCsv(id + "," + x + "," + y + "\n");
+
         ProjCoordinate coord = ProjFuncs.latlonToGoogleEarthGcs(x, y);
-        currentXPos = (int) coord.x;
-        int xPos = getXPos(type);
-        int yPos = getYPos(type);
+
+//       int xPos = getXPos(type);
+//        int yPos = getYPos(type);
+        double xPos = coord.x;
+        double yPos = coord.y;
 
         insertedNodes.put(id, new NodeInfo(xPos, yPos));
 
@@ -343,6 +381,16 @@ public class GtfsGraphLogger {
 
     public void exportGraphmlToFile() {
 
+        if (csvReportWriter != null) {
+            try {
+                csvReportWriter.flush();
+                csvReportWriter.close();
+            }
+            catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
         try {
             Transformer tr = TransformerFactory.newInstance().newTransformer();
             tr.setOutputProperty(OutputKeys.INDENT, "yes");
@@ -353,10 +401,12 @@ public class GtfsGraphLogger {
 
             // send DOM to file
             tr.transform(new DOMSource(dom), new StreamResult(new FileOutputStream(graphmlPath)));
-        } catch (TransformerException te) {
+
+            //Flush old graph and starts anew
+            resetLogger();
+
+        } catch (IOException | TransformerException | ParserConfigurationException te) {
             System.out.println(te.getMessage());
-        } catch (IOException ioe) {
-            System.out.println(ioe.getMessage());
         }
     }
 }
