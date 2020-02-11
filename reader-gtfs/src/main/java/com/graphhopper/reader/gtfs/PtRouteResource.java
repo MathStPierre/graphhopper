@@ -332,7 +332,7 @@ public final class PtRouteResource {
             }
 
             stopWatchStep1.stop();
-            logger.info("step1 duration: " + stopWatchStep1.getSeconds());
+            logger.info("1- backward search step duration: " + stopWatchStep1.getSeconds());
 
             StopWatch stopWatchStep2 = new StopWatch().start();
 
@@ -405,7 +405,7 @@ public final class PtRouteResource {
             }
 
 			stopWatchStep2.stop();
-            logger.info("step2 duration: " + stopWatchStep2.getSeconds());
+            logger.info("2- forward search step duration: " + stopWatchStep2.getSeconds());
 
             Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
             Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> log.exportGraphmlToFile());
@@ -439,7 +439,7 @@ public final class PtRouteResource {
             }
 
             stopWatchStep3.stop();
-            logger.info("step3 duration: " + stopWatchStep3.getSeconds());
+            logger.info("3- walking path step duration: " + stopWatchStep3.getSeconds());
 
             visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
@@ -452,8 +452,6 @@ public final class PtRouteResource {
                 response.addError(new RuntimeException("No route found"));
             }
 
-            //exportPathsToGraphMl(paths);
-
             if (GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER != null) {
                 List<Label.Transition> path = paths.get(0);
 
@@ -463,72 +461,9 @@ public final class PtRouteResource {
 
                 GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER.exportGraphmlToFile();
             }
-    //
-//            Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
-
 
             return paths;
 
-
-//        private void exportPathsToGraphMl(List<List<Label.Transition>> paths) {
-//            List<Label.Transition> path = paths.get(0);
-//
-//            path.forEach(t -> {
-//
-//                    Label.logLabel(log, label, false, ptEncodedValues, queryGraph);
-//
-//                    String edgeLabelStr = "";
-//
-//                    switch (t.edge.) {
-//                        case HIGHWAY:
-//                            edgeLabelStr = "HIGHWAY";
-//                            break;
-//                        case ENTER_TIME_EXPANDED_NETWORK:
-//                            edgeLabelStr = "ENTER_TEN";
-//                            break;
-//                        case LEAVE_TIME_EXPANDED_NETWORK:
-//                            edgeLabelStr = "LEAVE_TEN";
-//                            break;
-//                        case ENTER_PT:
-//                            edgeLabelStr = "ENTER_PT";
-//                            break;
-//                        case EXIT_PT:
-//                            edgeLabelStr = "EXIT_PT";
-//                            break;
-//                        case HOP:
-//                            edgeLabelStr = "HOP";
-//                            break;
-//                        case DWELL:
-//                            edgeLabelStr = "DWELL";
-//                            break;
-//                        case BOARD:
-//                            edgeLabelStr = "BOARD";
-//                            break;
-//                        case ALIGHT:
-//                            edgeLabelStr = "ALIGHT";
-//                            break;
-//                        case OVERNIGHT:
-//                            edgeLabelStr = "OVERNIGHT";
-//                            break;
-//                        case TRANSFER:
-//                            edgeLabelStr = "TRANSFER";
-//                            break;
-//                        case WAIT:
-//                            edgeLabelStr = "WAIT";
-//                            break;
-//                        case WAIT_ARRIVAL:
-//                            edgeLabelStr = "WAIT_ARRIVAL";
-//                            break;
-//                    }
-//
-//                    logger.addNode(t.edge.edgeIteratorState.getBaseNode(), 0, 0, GtfsGraphLogger.NodeLogType.OSM_NODE, "");
-//                    logger.addNode(t.edge.edgeIteratorState.getAdjNode(), 0, 0, GtfsGraphLogger.NodeLogType.OSM_NODE, "");
-//                    logger.addEdge(edgeLabelStr, t.edge.edgeIteratorState.getEdge(), t.edge.edgeIteratorState.getBaseNode(), t.edge.edgeIteratorState.getAdjNode());
-//
-//
-//
-//
-//                    });
         }
 
         private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {
