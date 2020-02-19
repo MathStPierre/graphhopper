@@ -151,7 +151,9 @@ public final class PtRouteResource {
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
 
         GHResponse route = new RequestHandler(request).route();
-        return WebHelper.jsonObject(route, true, true, false, false, 0.0f);
+        ObjectNode jsonResponse = WebHelper.jsonObject(route, true, true, false, false, 0.0f);
+        Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(logger -> logger.appendNodes(jsonResponse));
+        return jsonResponse;
     }
 
     public GHResponse route(Request request) {

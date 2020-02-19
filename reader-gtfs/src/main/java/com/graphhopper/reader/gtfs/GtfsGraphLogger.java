@@ -27,7 +27,9 @@ import java.io.IOException;
 
 import java.lang.Integer;
 
+import java.text.NumberFormat;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -40,6 +42,11 @@ import javax.xml.transform.TransformerFactory;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.graphhopper.PathWrapper;
+import com.graphhopper.util.Helper;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Text;
@@ -89,13 +96,21 @@ public class GtfsGraphLogger {
 
     class NodeInfo {
 
-        NodeInfo(double xPos, double yPos) {
+        NodeInfo(String nodeText, NodeLogType type, double lon, double lat, double xPos, double yPos) {
+            this.nodeText = nodeText;
+            this.type = type;
             this.xPos = xPos;
             this.yPos = yPos;
+            this.lon = lon;
+            this.lat = lat;
         }
 
+        public NodeLogType type;
+        public String nodeText;
         public double xPos;
         public double yPos;
+        public double lat;
+        public double lon;
     }
 
     private final Map<String, NodeInfo> insertedNodes = new HashMap<>();
@@ -310,7 +325,7 @@ public class GtfsGraphLogger {
         double xPos = coord.x;
         double yPos = coord.y;
 
-        insertedNodes.put(id, new NodeInfo(xPos, yPos));
+        insertedNodes.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos));
 
         Element nodeEle = appendXmlNode(graphEle, "node", "id=" + id);
         appendXmlNode(graphEle, "data", "key=d0");
@@ -351,6 +366,30 @@ public class GtfsGraphLogger {
         Element modelParamEle = appendXmlNode(nodeLabelEle, "y:ModelParameter", "");
         appendXmlNode(modelParamEle, "y:SmartNodeLabelModelParameter", "labelRatioX=0.0 labelRatioY=0.0 nodeRatioX=0.0 nodeRatioY=0.0 offsetX=0.0 offsetY=0.0 upX=0.0 upY=-1.0");
         appendXmlNode(shapeNodeEle, "y:Shape", "type=ellipse");
+    }
+
+    public ObjectNode appendNodes(ObjectNode geoJson) {
+
+        ObjectNode jsonExploredColl = geoJson.putObject("exploredNodes");
+        jsonExploredColl.put("type", "FeatureCollection");
+        ArrayNode jsonExploredNodes = jsonExploredColl.putArray("features");
+
+        insertedNodes.forEach( (id, nInfo) -> {
+            ObjectNode feature = jsonExploredNodes.addObject();
+            feature.put("type", "Feature");
+            ObjectNode geometry = feature.putObject("geometry");
+            geometry.put("type", "Point");
+            ArrayNode coords = geometry.putArray("coordinates");
+            coords.add(nInfo.lon).add(nInfo.lat);
+
+            ObjectNode props = feature.putObject("properties");
+            props.put("id", id);
+            props.put("type", nInfo.type.toString());
+            props.put("text", nInfo.nodeText);
+
+        });
+
+        return geoJson;
     }
 
     public void addEdge(String edgeType, int id, int srcNodeId, int targetNodeId) {
