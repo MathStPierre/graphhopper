@@ -471,14 +471,15 @@ public final class PtRouteResource {
                 response.addError(new RuntimeException("No route found"));
             }
 
-            if (GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER != null) {
+            if (GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER != null || exploredNodeLogger != null) {
                 List<Label.Transition> path = paths.get(0);
 
                 path.forEach(t -> {
-                    Label.logLabel(GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER, t.label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.RESULT);
+                    Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> Label.logLabel(log, t.label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.RESULT));
+                    Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, t.label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.RESULT));
                 });
 
-                GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER.exportGraphmlToFile();
+                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
             }
 
             return paths;
