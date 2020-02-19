@@ -100,7 +100,7 @@ public class GtfsGraphLogger {
 
     class NodeInfo {
 
-        NodeInfo(String nodeText, NodeLogType type, double lon, double lat, double xPos, double yPos, FindNodesStep step) {
+        NodeInfo(String nodeText, NodeLogType type, double lon, double lat, double xPos, double yPos, FindNodesStep step, int exploredSequence) {
             this.nodeText = nodeText;
             this.type = type;
             this.xPos = xPos;
@@ -108,6 +108,7 @@ public class GtfsGraphLogger {
             this.lon = lon;
             this.lat = lat;
             this.findNodesStep = step;
+            this.exploredSequence = exploredSequence;
         }
 
         public NodeLogType type;
@@ -117,6 +118,7 @@ public class GtfsGraphLogger {
         public double lat;
         public double lon;
         public FindNodesStep findNodesStep;
+        public int exploredSequence;
     }
 
     private final Map<FindNodesStep, Map<String, NodeInfo>> insertedNodes = new HashMap<>();
@@ -338,7 +340,7 @@ public class GtfsGraphLogger {
             nodesMap = insertedNodes.get(step);
         }
 
-        nodesMap.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos, step));
+        nodesMap.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos, step, nodesMap.size()));
 
         //Hack to avoid having same node id in graphml export.
         for (Map<String, NodeInfo> nodesMapV : insertedNodes.values()) {
@@ -407,6 +409,7 @@ public class GtfsGraphLogger {
             props.put("type", nInfo.type.toString());
             props.put("text", nInfo.nodeText);
             props.put("step", nInfo.findNodesStep.toString());
+            props.put("exploreSequence", nInfo.exploredSequence);
         }));
 
         return geoJson;
