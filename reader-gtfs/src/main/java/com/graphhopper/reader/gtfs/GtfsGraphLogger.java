@@ -86,6 +86,10 @@ public class GtfsGraphLogger {
         OSM_NODE, ENTER_EXIT_PT, BOARD_NODE, ARRIVAL_STOP_TIME_NODE, DEPARTURE_STOP_TIME_NODE, ALIGHT_NODE, BLOCK_TRANSFER_NODE, WAIT_NODE
     }
 
+    public enum FindNodesStep {
+        BACKWARD_SEARCH, FORWARD_SEARCH, RESULT
+    }
+
     private DocumentBuilderFactory dbf;
     private DocumentBuilder db;
     private Document dom;
@@ -96,13 +100,14 @@ public class GtfsGraphLogger {
 
     class NodeInfo {
 
-        NodeInfo(String nodeText, NodeLogType type, double lon, double lat, double xPos, double yPos) {
+        NodeInfo(String nodeText, NodeLogType type, double lon, double lat, double xPos, double yPos, FindNodesStep step) {
             this.nodeText = nodeText;
             this.type = type;
             this.xPos = xPos;
             this.yPos = yPos;
             this.lon = lon;
             this.lat = lat;
+            this.step = step;
         }
 
         public NodeLogType type;
@@ -111,6 +116,7 @@ public class GtfsGraphLogger {
         public double yPos;
         public double lat;
         public double lon;
+        public FindNodesStep step;
     }
 
     private final Map<String, NodeInfo> insertedNodes = new HashMap<>();
@@ -305,11 +311,11 @@ public class GtfsGraphLogger {
         findNextTripColor();
     }
 
-    public void addNode(int id, double x, double y, NodeLogType type, String nodeText) {
-        addNode(String.valueOf(id), x, y, type, nodeText);
+    public void addNode(int id, double x, double y, NodeLogType type, String nodeText, FindNodesStep step) {
+        addNode(String.valueOf(id), x, y, type, nodeText, step);
     }
 
-    public void addNode(String id, double x, double y, NodeLogType type, String nodeText) {
+    public void addNode(String id, double x, double y, NodeLogType type, String nodeText, FindNodesStep step) {
 
         //Avoid creating duplicate nodes.
         if (insertedNodes.containsKey(id)) {
@@ -325,7 +331,7 @@ public class GtfsGraphLogger {
         double xPos = coord.x;
         double yPos = coord.y;
 
-        insertedNodes.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos));
+        insertedNodes.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos, step));
 
         Element nodeEle = appendXmlNode(graphEle, "node", "id=" + id);
         appendXmlNode(graphEle, "data", "key=d0");
@@ -386,7 +392,7 @@ public class GtfsGraphLogger {
             props.put("id", id);
             props.put("type", nInfo.type.toString());
             props.put("text", nInfo.nodeText);
-
+            props.put("step", nInfo.step.toString());
         });
 
         return geoJson;

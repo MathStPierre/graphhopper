@@ -66,6 +66,8 @@ public final class PtRouteResource {
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final TripFromLabel tripFromLabel;
+    private GtfsGraphLogger exploredNodeLogger = null;
+
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
     private static GtfsGraphLogger GH_GTFS_GRAPH_LOGGER_REVERSE = null;
@@ -131,7 +133,20 @@ public final class PtRouteResource {
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
-                            @QueryParam("pt.limit_solutions") Integer limitSolutions) {
+                            @QueryParam("pt.limit_solutions") Integer limitSolutions,
+                            @QueryParam("out_explored_nodes") @DefaultValue("false") boolean out_explored_nodes) {
+
+        if (out_explored_nodes) {
+            try {
+                exploredNodeLogger = new GtfsGraphLogger("dummyPath");
+            } catch (ParserConfigurationException e) {
+                throw new ExceptionInInitializerError(e);
+            }
+        }
+        else {
+            exploredNodeLogger = null;
+        }
+
 
         if (departureTimeString == null) {
             throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
@@ -152,7 +167,7 @@ public final class PtRouteResource {
 
         GHResponse route = new RequestHandler(request).route();
         ObjectNode jsonResponse = WebHelper.jsonObject(route, true, true, false, false, 0.0f);
-        Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(logger -> logger.appendNodes(jsonResponse));
+        Optional.ofNullable(exploredNodeLogger).ifPresent(logger -> logger.appendNodes(jsonResponse));
         return jsonResponse;
     }
 
@@ -317,7 +332,8 @@ public final class PtRouteResource {
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
-                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph));
+                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH));
+                Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH));
 
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
@@ -356,7 +372,8 @@ public final class PtRouteResource {
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
-                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph));
+                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH));
+                Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH));
 
                 // For single-criterion or pareto queries, we run to the end.
                 //
@@ -409,8 +426,8 @@ public final class PtRouteResource {
 			stopWatchStep2.stop();
             logger.info("2- forward search step duration: " + stopWatchStep2.getSeconds());
 
-            Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
-            Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> log.exportGraphmlToFile());
+            //Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
+            //Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> log.exportGraphmlToFile());
 
 			StopWatch stopWatchStep3 = new StopWatch();
             stopWatchStep3.start();
@@ -458,7 +475,7 @@ public final class PtRouteResource {
                 List<Label.Transition> path = paths.get(0);
 
                 path.forEach(t -> {
-                    Label.logLabel(GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER, t.label, false, ptEncodedValues, queryGraph);
+                    Label.logLabel(GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER, t.label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.RESULT);
                 });
 
                 GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER.exportGraphmlToFile();

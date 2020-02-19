@@ -135,7 +135,7 @@ public class Label {
                 edgeIteratorState.get(flagEncoder.getTransfersEnc()), edgeIteratorState.getDistance());
     }
 
-    public static void logLabel(GtfsGraphLogger logger, Label label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph) {
+    public static void logLabel(GtfsGraphLogger logger, Label label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, GtfsGraphLogger.FindNodesStep findNodesStep) {
 
         String logHighwayEdge = System.getenv("GH_GTFS_LOG_HIGHWAY_EDGE_GRAPH_LOGGER");
         boolean reverseEdgeFlags = !arriveBy;
@@ -219,10 +219,8 @@ public class Label {
                     break;
             }
 
-
-
-            logger.addNode(edgeIteratorState.getBaseNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), baseNodeType, "");
-            logger.addNode(edgeIteratorState.getAdjNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getAdjNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getAdjNode()), adjNodeType, "");
+            logger.addNode(edgeIteratorState.getBaseNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), baseNodeType, "", findNodesStep);
+            logger.addNode(edgeIteratorState.getAdjNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getAdjNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getAdjNode()), adjNodeType, "", findNodesStep);
             logger.addEdge(edgeLabelStr, edgeIteratorState.getEdge(), edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode());
         }
         else {
