@@ -107,7 +107,7 @@ public class GtfsGraphLogger {
             this.yPos = yPos;
             this.lon = lon;
             this.lat = lat;
-            this.step = step;
+            this.findNodesStep = step;
         }
 
         public NodeLogType type;
@@ -116,10 +116,10 @@ public class GtfsGraphLogger {
         public double yPos;
         public double lat;
         public double lon;
-        public FindNodesStep step;
+        public FindNodesStep findNodesStep;
     }
 
-    private final Map<String, NodeInfo> insertedNodes = new HashMap<>();
+    private final Map<FindNodesStep, Map<String, NodeInfo>> insertedNodes = new HashMap<>();
     private int currentTripIndex = 0;
     private Color currentTripColor = null;
     private static Color OSM_NODE_COLOR = new Color(0,0,0);
@@ -167,7 +167,7 @@ public class GtfsGraphLogger {
 
     private void writeToCsv(String text) {
 
-        if (!outputCsv ){
+        if (!outputCsv){
             return;
         }
 
@@ -317,8 +317,10 @@ public class GtfsGraphLogger {
 
     public void addNode(String id, double x, double y, NodeLogType type, String nodeText, FindNodesStep step) {
 
+        Map<String, NodeInfo> nodesMap = insertedNodes.get(step);
+
         //Avoid creating duplicate nodes.
-        if (insertedNodes.containsKey(id)) {
+        if (nodesMap != null && nodesMap.containsKey(id)) {
             return;
         }
 
@@ -331,7 +333,19 @@ public class GtfsGraphLogger {
         double xPos = coord.x;
         double yPos = coord.y;
 
-        insertedNodes.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos, step));
+        if (nodesMap == null) {
+            insertedNodes.put(step, new HashMap<>());
+            nodesMap = insertedNodes.get(step);
+        }
+
+        nodesMap.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos, step));
+
+        //Hack to avoid having same node id in graphml export.
+        for (Map<String, NodeInfo> nodesMapV : insertedNodes.values()) {
+            if (nodesMapV.containsKey(id)) {
+                return;
+            }
+        }
 
         Element nodeEle = appendXmlNode(graphEle, "node", "id=" + id);
         appendXmlNode(graphEle, "data", "key=d0");
@@ -380,7 +394,7 @@ public class GtfsGraphLogger {
         jsonExploredColl.put("type", "FeatureCollection");
         ArrayNode jsonExploredNodes = jsonExploredColl.putArray("features");
 
-        insertedNodes.forEach( (id, nInfo) -> {
+        insertedNodes.forEach( (s, v) -> v.forEach((id, nInfo) -> {
             ObjectNode feature = jsonExploredNodes.addObject();
             feature.put("type", "Feature");
             ObjectNode geometry = feature.putObject("geometry");
@@ -392,8 +406,8 @@ public class GtfsGraphLogger {
             props.put("id", id);
             props.put("type", nInfo.type.toString());
             props.put("text", nInfo.nodeText);
-            props.put("step", nInfo.step.toString());
-        });
+            props.put("step", nInfo.findNodesStep.toString());
+        }));
 
         return geoJson;
     }
