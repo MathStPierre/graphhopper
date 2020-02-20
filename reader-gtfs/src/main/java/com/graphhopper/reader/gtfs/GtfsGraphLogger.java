@@ -60,17 +60,18 @@ import org.osgeo.proj4j.ProjCoordinate;
 
 
 class ProjFuncs {
+
     static CRSFactory mCsFactory = new CRSFactory();
     static CoordinateTransformFactory mCtFactory = new CoordinateTransformFactory();
 
     static String EPSG_WGS84 = "EPSG:4326";
     static String EPSG_GOOGLE_EARTH = "EPSG:3857";
 
-    public static ProjCoordinate latlonToGoogleEarthGcs(double lng, double lat) {
+    static CoordinateReferenceSystem crs1 = mCsFactory.createFromName(EPSG_WGS84);
+    static CoordinateReferenceSystem crs2 = mCsFactory.createFromName(EPSG_GOOGLE_EARTH);
+    static CoordinateTransform trans = mCtFactory.createTransform(crs1, crs2);
 
-        CoordinateReferenceSystem crs1 = mCsFactory.createFromName(EPSG_WGS84);
-        CoordinateReferenceSystem crs2 = mCsFactory.createFromName(EPSG_GOOGLE_EARTH);
-        CoordinateTransform trans = mCtFactory.createTransform(crs1, crs2);
+    public static ProjCoordinate latlonToGoogleEarthGcs(double lng, double lat) {
         ProjCoordinate p1 = new ProjCoordinate();
         ProjCoordinate p2 = new ProjCoordinate();
         p1.x = lng;
