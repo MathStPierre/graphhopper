@@ -64,7 +64,6 @@ public final class PtRouteResource {
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final TripFromLabel tripFromLabel;
-    private GtfsGraphLogger exploredNodeLogger = null;
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
@@ -96,6 +95,8 @@ public final class PtRouteResource {
                             @QueryParam("pt.limit_solutions") Integer limitSolutions,
                             @QueryParam("out_explored_nodes") @DefaultValue("false") boolean out_explored_nodes) {
 
+        GtfsGraphLogger exploredNodeLogger = null;
+
         if (out_explored_nodes) {
             try {
                 exploredNodeLogger = new GtfsGraphLogger();
@@ -103,10 +104,6 @@ public final class PtRouteResource {
                 throw new ExceptionInInitializerError(e);
             }
         }
-        else {
-            exploredNodeLogger = null;
-        }
-
 
         if (departureTimeString == null) {
             throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
@@ -124,6 +121,7 @@ public final class PtRouteResource {
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
+        Optional.ofNullable(exploredNodeLogger).ifPresent(request::setGtfsGraphLogger);
 
         GHResponse route = new RequestHandler(request).route();
         ObjectNode jsonResponse = WebHelper.jsonObject(route, true, true, false, false, 0.0f);
@@ -178,6 +176,7 @@ public final class PtRouteResource {
         private final GHLocation exit;
         private final Translation translation;
         private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>(realtimeFeed.getAdditionalEdges());
+        private final GtfsGraphLogger exploredNodeLogger;
 
         private final GHResponse response = new GHResponse();
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
@@ -195,7 +194,9 @@ public final class PtRouteResource {
             arriveBy = request.isArriveBy();
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
+            exploredNodeLogger = request.getGtfsGraphLogger();
             translation = translationMap.getWithFallBack(request.getLocale());
+
             if (request.getPoints().size() != 2) {
                 throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + request.getPoints().size());
             }
