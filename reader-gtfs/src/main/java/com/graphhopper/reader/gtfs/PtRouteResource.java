@@ -29,7 +29,6 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -69,44 +68,6 @@ public final class PtRouteResource {
 
 	private Logger logger = LoggerFactory.getLogger(getClass());
 
-    private static GtfsGraphLogger GH_GTFS_GRAPH_LOGGER_REVERSE = null;
-    private static GtfsGraphLogger GH_GTFS_GRAPH_LOGGER_FORWARD = null;
-    private static GtfsGraphLogger GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER = null;
-
-    static {
-        try {
-            String pathReverseRouteGraphml = System.getenv("GH_GTFS_GRAPH_LOGGER_OUTPUT_REVERSE_ROUTE");
-
-            if (pathReverseRouteGraphml != null) {
-                GH_GTFS_GRAPH_LOGGER_REVERSE = new GtfsGraphLogger(pathReverseRouteGraphml);
-            }
-
-        } catch (ParserConfigurationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-
-        try {
-            String pathForwardRouteGraphml = System.getenv("GH_GTFS_GRAPH_LOGGER_OUTPUT_FORWARD_ROUTE");
-
-            if (pathForwardRouteGraphml != null) {
-                GH_GTFS_GRAPH_LOGGER_FORWARD = new GtfsGraphLogger(pathForwardRouteGraphml);
-            }
-
-        } catch (ParserConfigurationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-
-        try {
-            String pathFoundRouteGraphml = System.getenv("GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER");
-
-            if (pathFoundRouteGraphml != null) {
-                GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER = new GtfsGraphLogger(pathFoundRouteGraphml);
-            }
-
-        } catch (ParserConfigurationException e) {
-            throw new ExceptionInInitializerError(e);
-        }
-    }
 
     @Inject
     public PtRouteResource(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
@@ -137,7 +98,7 @@ public final class PtRouteResource {
 
         if (out_explored_nodes) {
             try {
-                exploredNodeLogger = new GtfsGraphLogger("dummyPath");
+                exploredNodeLogger = new GtfsGraphLogger();
             } catch (ParserConfigurationException e) {
                 throw new ExceptionInInitializerError(e);
             }
@@ -331,7 +292,6 @@ public final class PtRouteResource {
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
-                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH));
                 Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH));
 
                 if (label.adjNode == startNode) {
@@ -371,7 +331,6 @@ public final class PtRouteResource {
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
-                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH));
                 Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH));
 
                 // For single-criterion or pareto queries, we run to the end.
@@ -425,9 +384,6 @@ public final class PtRouteResource {
 			stopWatchStep2.stop();
             logger.info("2- forward search step duration: " + stopWatchStep2.getSeconds());
 
-            //Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
-            //Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_FORWARD).ifPresent(log -> log.exportGraphmlToFile());
-
 			StopWatch stopWatchStep3 = new StopWatch();
             stopWatchStep3.start();
 
@@ -470,15 +426,23 @@ public final class PtRouteResource {
                 response.addError(new RuntimeException("No route found"));
             }
 
-            if (GH_GTFS_FOUND_ROUTE_GRAPH_LOGGER != null || exploredNodeLogger != null) {
+            if (exploredNodeLogger != null) {
                 List<Label.Transition> path = paths.get(0);
 
                 path.forEach(t -> {
-                    Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> Label.logLabel(log, t.label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.RESULT));
                     Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, t.label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.RESULT));
                 });
 
-                Optional.ofNullable(GH_GTFS_GRAPH_LOGGER_REVERSE).ifPresent(log -> log.exportGraphmlToFile());
+                String graphmlOutputDir = System.getenv("GH_GTFS_GRAPH_LOGGER_OUTPUT_DIR");
+                if (graphmlOutputDir != null) {
+
+                    try {
+                        exploredNodeLogger.exportGraphmlToFile(graphmlOutputDir);
+                    }
+                    catch(Exception e) {
+                        logger.warn("Cannot create graphml file : " + e.getMessage());
+                    }
+                }
             }
 
             return paths;

@@ -31,6 +31,7 @@ import java.text.NumberFormat;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -90,11 +91,11 @@ public class GtfsGraphLogger {
         BACKWARD_SEARCH, FORWARD_SEARCH, RESULT
     }
 
-    private DocumentBuilderFactory dbf;
-    private DocumentBuilder db;
-    private Document dom;
-    private Element graphEle;
-    private String graphmlPath;
+//    private DocumentBuilderFactory dbf;
+//    private DocumentBuilder db;
+//    private Document dom;
+//    private Element graphEle;
+//    private String graphmlPath;
     private boolean outputCsv = true;
     BufferedWriter csvReportWriter = null;
 
@@ -121,7 +122,25 @@ public class GtfsGraphLogger {
         public int exploredSequence;
     }
 
+    class EdgeInfo {
+
+        EdgeInfo(String edgeType, String id, String srcNodeId, String targetNodeId, int exploredSequence) {
+            this.edgeType = edgeType;
+            this.id = id;
+            this.srcNodeId = srcNodeId;
+            this.targetNodeId = targetNodeId;
+            this.exploredSequence = exploredSequence;
+        }
+
+        public String edgeType;
+        public String id;
+        public String srcNodeId;
+        public String targetNodeId;
+        public int exploredSequence;
+    }
+
     private final Map<FindNodesStep, Map<String, NodeInfo>> insertedNodes = new HashMap<>();
+    private final Map<FindNodesStep, Map<String, EdgeInfo>> insertedEdges = new HashMap<>();
     private int currentTripIndex = 0;
     private Color currentTripColor = null;
     private static Color OSM_NODE_COLOR = new Color(0,0,0);
@@ -143,7 +162,7 @@ public class GtfsGraphLogger {
 
     private int currentXPos = 0;
 
-    private Element appendXmlNode(final Element parentEle, final String nodeName, final String attributes) {
+    private Element appendXmlNode(final Document dom, final Element parentEle, final String nodeName, final String attributes) {
         Element keyEle = dom.createElement(nodeName);
         final String[] attributeList = attributes.split(" ");
         for (String attr : attributeList) {
@@ -160,36 +179,35 @@ public class GtfsGraphLogger {
         return keyEle;
     }
 
-    public GtfsGraphLogger(String graphmlPath) throws ParserConfigurationException {
+    public GtfsGraphLogger() throws ParserConfigurationException {
 
-        this.graphmlPath = graphmlPath;
         findNextTripColor();
         resetLogger();
     }
 
     private void writeToCsv(String text) {
 
-        if (!outputCsv){
-            return;
-        }
-
-        if (csvReportWriter == null) {
-
-            try {
-                csvReportWriter = new BufferedWriter(new FileWriter(graphmlPath + ".csv"));
-                csvReportWriter.write("NodeId,Lng,Lat\n");
-            }
-            catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        try {
-            csvReportWriter.write(text);
-        }
-        catch (IOException e) {
-            e.printStackTrace();
-        }
+//        if (!outputCsv){
+//            return;
+//        }
+//
+//        if (csvReportWriter == null) {
+//
+//            try {
+//                csvReportWriter = new BufferedWriter(new FileWriter(graphmlPath + ".csv"));
+//                csvReportWriter.write("NodeId,Lng,Lat\n");
+//            }
+//            catch (IOException e) {
+//                e.printStackTrace();
+//            }
+//        }
+//
+//        try {
+//            csvReportWriter.write(text);
+//        }
+//        catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private void resetLogger() throws ParserConfigurationException {
@@ -228,31 +246,32 @@ public class GtfsGraphLogger {
         }
 
         insertedNodes.clear();
+        insertedEdges.clear();
 
-        dbf = DocumentBuilderFactory.newInstance();
-        db = dbf.newDocumentBuilder();
-        dom = db.newDocument();
-
-        Element rootEle = appendXmlNode(null, "graphml", "xmlns=http://graphml.graphdrawing.org/xmlns xmlns:java=http://www.yworks.com/xml/yfiles-common/1.0/java xmlns:sys=http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0 xmlns:x=http://www.yworks.com/xml/yfiles-common/markup/2.0 xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:y=http://www.yworks.com/xml/graphml xmlns:yed=http://www.yworks.com/xml/yed/3 xsi:schemaLocation=http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd");
-        appendXmlNode(rootEle, "key", "attr.name=Description attr.type=string for=graph id=d0");
-        appendXmlNode(rootEle, "key", "for=port id=d1 yfiles.type=portgraphics");
-        appendXmlNode(rootEle, "key", "for=port id=d2 yfiles.type=portgeometry");
-        appendXmlNode(rootEle, "key", "for=port id=d3 yfiles.type=portuserdata");
-        appendXmlNode(rootEle, "key", "attr.name=url attr.type=string for=node id=d4");
-        appendXmlNode(rootEle, "key", "attr.name=description attr.type=string for=node id=d5");
-        appendXmlNode(rootEle, "key", "for=node id=d6 yfiles.type=nodegraphics");
-        appendXmlNode(rootEle, "key", "for=graphml id=d7 yfiles.type=resources");
-        appendXmlNode(rootEle, "key", "attr.name=url attr.type=string for=edge id=d8");
-        appendXmlNode(rootEle, "key", "attr.name=description attr.type=string for=edge id=d9");
-        appendXmlNode(rootEle, "key", "for=edge id=d10 yfiles.type=edgegraphics");
-
-        graphEle = dom.createElement("graph");
-        graphEle.setAttribute("edgedefault", "directed");
-        graphEle.setAttribute("id", "G");
-
-        rootEle.appendChild(graphEle);
-
-        dom.appendChild(rootEle);
+//        dbf = DocumentBuilderFactory.newInstance();
+//        db = dbf.newDocumentBuilder();
+//        dom = db.newDocument();
+//
+//        Element rootEle = appendXmlNode(dom, null, "graphml", "xmlns=http://graphml.graphdrawing.org/xmlns xmlns:java=http://www.yworks.com/xml/yfiles-common/1.0/java xmlns:sys=http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0 xmlns:x=http://www.yworks.com/xml/yfiles-common/markup/2.0 xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:y=http://www.yworks.com/xml/graphml xmlns:yed=http://www.yworks.com/xml/yed/3 xsi:schemaLocation=http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd");
+//        appendXmlNode(dom, rootEle, "key", "attr.name=Description attr.type=string for=graph id=d0");
+//        appendXmlNode(dom, rootEle, "key", "for=port id=d1 yfiles.type=portgraphics");
+//        appendXmlNode(dom, rootEle, "key", "for=port id=d2 yfiles.type=portgeometry");
+//        appendXmlNode(dom, rootEle, "key", "for=port id=d3 yfiles.type=portuserdata");
+//        appendXmlNode(dom, rootEle, "key", "attr.name=url attr.type=string for=node id=d4");
+//        appendXmlNode(dom, rootEle, "key", "attr.name=description attr.type=string for=node id=d5");
+//        appendXmlNode(dom, rootEle, "key", "for=node id=d6 yfiles.type=nodegraphics");
+//        appendXmlNode(dom, rootEle, "key", "for=graphml id=d7 yfiles.type=resources");
+//        appendXmlNode(dom, rootEle, "key", "attr.name=url attr.type=string for=edge id=d8");
+//        appendXmlNode(dom, rootEle, "key", "attr.name=description attr.type=string for=edge id=d9");
+//        appendXmlNode(dom, rootEle, "key", "for=edge id=d10 yfiles.type=edgegraphics");
+//
+//        graphEle = dom.createElement("graph");
+//        graphEle.setAttribute("edgedefault", "directed");
+//        graphEle.setAttribute("id", "G");
+//
+//        rootEle.appendChild(graphEle);
+//
+//        dom.appendChild(rootEle);
     }
 
     private double getXPos(NodeLogType type) {
@@ -349,45 +368,45 @@ public class GtfsGraphLogger {
             }
         }
 
-        Element nodeEle = appendXmlNode(graphEle, "node", "id=" + id);
-        appendXmlNode(graphEle, "data", "key=d0");
-        Element dataNodeEle = appendXmlNode(nodeEle, "data", "key=d6");
-        Element shapeNodeEle = appendXmlNode(dataNodeEle, "y:ShapeNode", "");
-        appendXmlNode(shapeNodeEle, "y:Geometry", "key=d6 height=40.0 width=75.0 x=" + String.valueOf(xPos) + " y=" + String.valueOf(yPos));
-
-        String fillEleAttrs = "transparent=false color=";
-
-        switch (type) {
-            case OSM_NODE:
-                fillEleAttrs += String.format("#%02x%02x%02x", OSM_NODE_COLOR.getRed(), OSM_NODE_COLOR.getGreen(), OSM_NODE_COLOR.getBlue()); //Black
-                break;
-            case ENTER_EXIT_PT:
-                fillEleAttrs += String.format("#%02x%02x%02x", STOP_NODE_COLOR.getRed(), STOP_NODE_COLOR.getGreen(), STOP_NODE_COLOR.getBlue()); //Red
-                break;
-            default:
-                fillEleAttrs += String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue());
-                break;
-        }
-
-        appendXmlNode(shapeNodeEle, "y:Fill", fillEleAttrs);
-        appendXmlNode(shapeNodeEle, "y:BorderStyle", "color=#000000 type=line width=1.0");
-
-        Element nodeLabelEle = appendXmlNode(shapeNodeEle, "y:NodeLabel", "alignment=center autoSizePolicy=content fontFamily=Dialog fontSize=16 fontStyle=plain hasBackgroundColor=false " +
-                                                                                            "hasLineColor=false hasText=true height=4.0 modelName=custom textColor=" +
-                                                                                             String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()) +
-                                                                                            " visible=true width=4.0 x=13.0 y=13.0");
-
-        if (!nodeText.isEmpty()) {
-            Text textNode = dom.createTextNode(nodeText);
-            nodeLabelEle.appendChild(textNode);
-        }
-
-        Element labelModelEle = appendXmlNode(nodeLabelEle, "y:LabelModel", "");
-        appendXmlNode(labelModelEle, "y:SmartNodeLabelModel", "distance=4.0");
-
-        Element modelParamEle = appendXmlNode(nodeLabelEle, "y:ModelParameter", "");
-        appendXmlNode(modelParamEle, "y:SmartNodeLabelModelParameter", "labelRatioX=0.0 labelRatioY=0.0 nodeRatioX=0.0 nodeRatioY=0.0 offsetX=0.0 offsetY=0.0 upX=0.0 upY=-1.0");
-        appendXmlNode(shapeNodeEle, "y:Shape", "type=ellipse");
+//        Element nodeEle = appendXmlNode(dom, graphEle, "node", "id=" + id);
+//        appendXmlNode(dom, graphEle, "data", "key=d0");
+//        Element dataNodeEle = appendXmlNode(dom, nodeEle, "data", "key=d6");
+//        Element shapeNodeEle = appendXmlNode(dom, dataNodeEle, "y:ShapeNode", "");
+//        appendXmlNode(dom, shapeNodeEle, "y:Geometry", "key=d6 height=40.0 width=75.0 x=" + String.valueOf(xPos) + " y=" + String.valueOf(yPos));
+//
+//        String fillEleAttrs = "transparent=false color=";
+//
+//        switch (type) {
+//            case OSM_NODE:
+//                fillEleAttrs += String.format("#%02x%02x%02x", OSM_NODE_COLOR.getRed(), OSM_NODE_COLOR.getGreen(), OSM_NODE_COLOR.getBlue()); //Black
+//                break;
+//            case ENTER_EXIT_PT:
+//                fillEleAttrs += String.format("#%02x%02x%02x", STOP_NODE_COLOR.getRed(), STOP_NODE_COLOR.getGreen(), STOP_NODE_COLOR.getBlue()); //Red
+//                break;
+//            default:
+//                fillEleAttrs += String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue());
+//                break;
+//        }
+//
+//        appendXmlNode(dom, shapeNodeEle, "y:Fill", fillEleAttrs);
+//        appendXmlNode(dom, shapeNodeEle, "y:BorderStyle", "color=#000000 type=line width=1.0");
+//
+//        Element nodeLabelEle = appendXmlNode(dom, shapeNodeEle, "y:NodeLabel", "alignment=center autoSizePolicy=content fontFamily=Dialog fontSize=16 fontStyle=plain hasBackgroundColor=false " +
+//                                                                                            "hasLineColor=false hasText=true height=4.0 modelName=custom textColor=" +
+//                                                                                             String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()) +
+//                                                                                            " visible=true width=4.0 x=13.0 y=13.0");
+//
+//        if (!nodeText.isEmpty()) {
+//            Text textNode = dom.createTextNode(nodeText);
+//            nodeLabelEle.appendChild(textNode);
+//        }
+//
+//        Element labelModelEle = appendXmlNode(dom, nodeLabelEle, "y:LabelModel", "");
+//        appendXmlNode(dom, labelModelEle, "y:SmartNodeLabelModel", "distance=4.0");
+//
+//        Element modelParamEle = appendXmlNode(dom, nodeLabelEle, "y:ModelParameter", "");
+//        appendXmlNode(dom, modelParamEle, "y:SmartNodeLabelModelParameter", "labelRatioX=0.0 labelRatioY=0.0 nodeRatioX=0.0 nodeRatioY=0.0 offsetX=0.0 offsetY=0.0 upX=0.0 upY=-1.0");
+//        appendXmlNode(dom, shapeNodeEle, "y:Shape", "type=ellipse");
     }
 
     public ObjectNode appendNodes(ObjectNode geoJson) {
@@ -415,60 +434,148 @@ public class GtfsGraphLogger {
         return geoJson;
     }
 
-    public void addEdge(String edgeType, int id, int srcNodeId, int targetNodeId) {
-        addEdge(edgeType, String.valueOf(id), String.valueOf(srcNodeId), String.valueOf(targetNodeId));
+    public void addXmlNode(Element graphEle, Document dom, String id, double x, double y, NodeLogType type, String nodeText, FindNodesStep step) {
+
+        Element nodeEle = appendXmlNode(dom, graphEle, "node", "id=" + id);
+        appendXmlNode(dom, graphEle, "data", "key=d0");
+        Element dataNodeEle = appendXmlNode(dom, nodeEle, "data", "key=d6");
+        Element shapeNodeEle = appendXmlNode(dom, dataNodeEle, "y:ShapeNode", "");
+        appendXmlNode(dom, shapeNodeEle, "y:Geometry", "key=d6 height=40.0 width=75.0 x=" + String.valueOf(x) + " y=" + String.valueOf(y));
+
+        String fillEleAttrs = "transparent=false color=";
+
+        switch (type) {
+            case OSM_NODE:
+                fillEleAttrs += String.format("#%02x%02x%02x", OSM_NODE_COLOR.getRed(), OSM_NODE_COLOR.getGreen(), OSM_NODE_COLOR.getBlue()); //Black
+                break;
+            case ENTER_EXIT_PT:
+                fillEleAttrs += String.format("#%02x%02x%02x", STOP_NODE_COLOR.getRed(), STOP_NODE_COLOR.getGreen(), STOP_NODE_COLOR.getBlue()); //Red
+                break;
+            default:
+                fillEleAttrs += String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue());
+                break;
+        }
+
+        appendXmlNode(dom, shapeNodeEle, "y:Fill", fillEleAttrs);
+        appendXmlNode(dom, shapeNodeEle, "y:BorderStyle", "color=#000000 type=line width=1.0");
+
+        Element nodeLabelEle = appendXmlNode(dom, shapeNodeEle, "y:NodeLabel", "alignment=center autoSizePolicy=content fontFamily=Dialog fontSize=16 fontStyle=plain hasBackgroundColor=false " +
+                "hasLineColor=false hasText=true height=4.0 modelName=custom textColor=" +
+                String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()) +
+                " visible=true width=4.0 x=13.0 y=13.0");
+
+        if (!nodeText.isEmpty()) {
+            Text textNode = dom.createTextNode(nodeText);
+            nodeLabelEle.appendChild(textNode);
+        }
+
+        Element labelModelEle = appendXmlNode(dom, nodeLabelEle, "y:LabelModel", "");
+        appendXmlNode(dom, labelModelEle, "y:SmartNodeLabelModel", "distance=4.0");
+
+        Element modelParamEle = appendXmlNode(dom, nodeLabelEle, "y:ModelParameter", "");
+        appendXmlNode(dom, modelParamEle, "y:SmartNodeLabelModelParameter", "labelRatioX=0.0 labelRatioY=0.0 nodeRatioX=0.0 nodeRatioY=0.0 offsetX=0.0 offsetY=0.0 upX=0.0 upY=-1.0");
+        appendXmlNode(dom, shapeNodeEle, "y:Shape", "type=ellipse");
     }
 
-    public void addEdge(String edgeType, String id, String srcNodeId, String targetNodeId) {
-        Element edgeEle = appendXmlNode(graphEle, "edge", "id=" + id + " source=" + srcNodeId + " target=" + targetNodeId);
-        Element dataEle = appendXmlNode(edgeEle, "data", "key=d10");
-        Element polyEdgeEle = appendXmlNode(dataEle, "y:PolyLineEdge", "");
+    public void addEdge(String edgeType, int id, int srcNodeId, int targetNodeId, FindNodesStep step) {
+        addEdge(edgeType, String.valueOf(id), String.valueOf(srcNodeId), String.valueOf(targetNodeId), step);
+    }
 
-        appendXmlNode(polyEdgeEle, "y:Path", "sx=0.0 sy=0.0 tx=0.0 ty=0.0");
-        appendXmlNode(polyEdgeEle, "y:LineStyle", "color=#000000 type=line width=1.0");
-        appendXmlNode(polyEdgeEle, "y:Arrows", "source=none target=standard");
-        Element edgeLabelEle = appendXmlNode(polyEdgeEle, "y:EdgeLabel", "alignment=center anchorX=27.526667606424326 anchorY=50.05534221010657 configuration=AutoFlippingLabel distance=2.0 fontFamily=Dialog fontSize=12 fontStyle=plain hasBackgroundColor=false hasLineColor=false height=18.1328125 modelName=custom preferredPlacement=anywhere ratio=0.5 textColor=#000000 upX=0.30976697067661274 upY=-0.9508125072157152 visible=true width=28.7734375 x=27.526667606424326 y=32.81443729410911");
+    public void addEdge(String edgeType, String id, String srcNodeId, String targetNodeId, FindNodesStep step) {
+
+        Map<String, EdgeInfo> edgesMap = insertedEdges.get(step);
+
+        //Avoid creating duplicate nodes.
+        if (edgesMap != null && edgesMap.containsKey(id)) {
+            return;
+        }
+
+        if (edgesMap == null) {
+            insertedEdges.put(step, new HashMap<>());
+            edgesMap = insertedEdges.get(step);
+        }
+
+        edgesMap.put(id, new EdgeInfo(edgeType, id, srcNodeId, targetNodeId, edgesMap.size()));
+    }
+
+    public void addXmlEdge(Element graphEle, Document dom, String edgeType, String id, String srcNodeId, String targetNodeId) {
+
+        Element edgeEle = appendXmlNode(dom, graphEle, "edge", "id=" + id + " source=" + srcNodeId + " target=" + targetNodeId);
+        Element dataEle = appendXmlNode(dom, edgeEle, "data", "key=d10");
+        Element polyEdgeEle = appendXmlNode(dom, dataEle, "y:PolyLineEdge", "");
+
+        appendXmlNode(dom, polyEdgeEle, "y:Path", "sx=0.0 sy=0.0 tx=0.0 ty=0.0");
+        appendXmlNode(dom, polyEdgeEle, "y:LineStyle", "color=#000000 type=line width=1.0");
+        appendXmlNode(dom, polyEdgeEle, "y:Arrows", "source=none target=standard");
+        Element edgeLabelEle = appendXmlNode(dom, polyEdgeEle, "y:EdgeLabel", "alignment=center anchorX=27.526667606424326 anchorY=50.05534221010657 configuration=AutoFlippingLabel distance=2.0 fontFamily=Dialog fontSize=12 fontStyle=plain hasBackgroundColor=false hasLineColor=false height=18.1328125 modelName=custom preferredPlacement=anywhere ratio=0.5 textColor=#000000 upX=0.30976697067661274 upY=-0.9508125072157152 visible=true width=28.7734375 x=27.526667606424326 y=32.81443729410911");
 
         Text textNode = dom.createTextNode(edgeType + " " + id);
         edgeLabelEle.appendChild(textNode);
 
-        Element labelModelEle = appendXmlNode(edgeLabelEle, "y:LabelModel", "");
-        appendXmlNode(labelModelEle, "y:SmartEdgeLabelModel", "autoRotationEnabled=true defaultAngle=0.0 defaultDistance=10.0");
+        Element labelModelEle = appendXmlNode(dom, edgeLabelEle, "y:LabelModel", "");
+        appendXmlNode(dom, labelModelEle, "y:SmartEdgeLabelModel", "autoRotationEnabled=true defaultAngle=0.0 defaultDistance=10.0");
 
-        Element modelParamEle = appendXmlNode(edgeLabelEle, "y:ModelParameter", "");
-        appendXmlNode(modelParamEle, "y:SmartEdgeLabelModelParameter", "angle=0.0 distance=30.0 distanceToCenter=true position=right ratio=0.5 segment=0");
-        appendXmlNode(edgeLabelEle, "y:PreferredPlacementDescriptor", "angle=0.0 angleOffsetOnRightSide=0 angleReference=absolute angleRotationOnRightSide=co distance=-1.0 frozen=true placement=anywhere side=anywhere sideReference=relative_to_edge_flow");
-        appendXmlNode(polyEdgeEle, "y:BendStyle", "smoothed=false");
+        Element modelParamEle = appendXmlNode(dom, edgeLabelEle, "y:ModelParameter", "");
+        appendXmlNode(dom, modelParamEle, "y:SmartEdgeLabelModelParameter", "angle=0.0 distance=30.0 distanceToCenter=true position=right ratio=0.5 segment=0");
+        appendXmlNode(dom, edgeLabelEle, "y:PreferredPlacementDescriptor", "angle=0.0 angleOffsetOnRightSide=0 angleReference=absolute angleRotationOnRightSide=co distance=-1.0 frozen=true placement=anywhere side=anywhere sideReference=relative_to_edge_flow");
+        appendXmlNode(dom, polyEdgeEle, "y:BendStyle", "smoothed=false");
+
     }
 
-    public void exportGraphmlToFile() {
+    public void exportGraphmlToFile(String graphmlOutDir) throws ParserConfigurationException, IOException, TransformerException {
 
-        if (csvReportWriter != null) {
+        for (FindNodesStep key : insertedNodes.keySet()) {
+            Map<String, NodeInfo> nodesMap = insertedNodes.get(key);
+            Map<String, EdgeInfo> edgesMap = insertedEdges.get(key);
+            DocumentBuilderFactory dbf;
+            DocumentBuilder db;
+            Document dom;
+            Element graphEle;
+
+            dbf = DocumentBuilderFactory.newInstance();
+            db = dbf.newDocumentBuilder();
+            dom = db.newDocument();
+
+            Element rootEle = appendXmlNode(dom, null, "graphml", "xmlns=http://graphml.graphdrawing.org/xmlns xmlns:java=http://www.yworks.com/xml/yfiles-common/1.0/java xmlns:sys=http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0 xmlns:x=http://www.yworks.com/xml/yfiles-common/markup/2.0 xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:y=http://www.yworks.com/xml/graphml xmlns:yed=http://www.yworks.com/xml/yed/3 xsi:schemaLocation=http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd");
+            appendXmlNode(dom, rootEle, "key", "attr.name=Description attr.type=string for=graph id=d0");
+            appendXmlNode(dom, rootEle, "key", "for=port id=d1 yfiles.type=portgraphics");
+            appendXmlNode(dom, rootEle, "key", "for=port id=d2 yfiles.type=portgeometry");
+            appendXmlNode(dom, rootEle, "key", "for=port id=d3 yfiles.type=portuserdata");
+            appendXmlNode(dom, rootEle, "key", "attr.name=url attr.type=string for=node id=d4");
+            appendXmlNode(dom, rootEle, "key", "attr.name=description attr.type=string for=node id=d5");
+            appendXmlNode(dom, rootEle, "key", "for=node id=d6 yfiles.type=nodegraphics");
+            appendXmlNode(dom, rootEle, "key", "for=graphml id=d7 yfiles.type=resources");
+            appendXmlNode(dom, rootEle, "key", "attr.name=url attr.type=string for=edge id=d8");
+            appendXmlNode(dom, rootEle, "key", "attr.name=description attr.type=string for=edge id=d9");
+            appendXmlNode(dom, rootEle, "key", "for=edge id=d10 yfiles.type=edgegraphics");
+
+            graphEle = dom.createElement("graph");
+            graphEle.setAttribute("edgedefault", "directed");
+            graphEle.setAttribute("id", "G");
+
+            rootEle.appendChild(graphEle);
+
+            dom.appendChild(rootEle);
+
+            nodesMap.forEach((k, n) -> addXmlNode(graphEle, dom, k, n.xPos, n.yPos, n.type, n.nodeText, n.findNodesStep));
+            Optional.ofNullable(edgesMap).ifPresent(m -> m.forEach((k, e) -> addXmlEdge(graphEle, dom, e.edgeType, k, e.srcNodeId, e.targetNodeId)));
+
             try {
-                csvReportWriter.flush();
-                csvReportWriter.close();
-            }
-            catch (IOException e) {
-                e.printStackTrace();
+                Transformer tr = TransformerFactory.newInstance().newTransformer();
+                tr.setOutputProperty(OutputKeys.INDENT, "yes");
+                tr.setOutputProperty(OutputKeys.METHOD, "xml");
+                tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
+                //tr.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "roles.dtd");
+                tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+                // send DOM to file
+                tr.transform(new DOMSource(dom), new StreamResult(new FileOutputStream(graphmlOutDir + "/" + key.toString() + ".graphml")));
+            } catch (IOException | TransformerException te) {
+                System.out.println(te.getMessage());
             }
         }
 
-        try {
-            Transformer tr = TransformerFactory.newInstance().newTransformer();
-            tr.setOutputProperty(OutputKeys.INDENT, "yes");
-            tr.setOutputProperty(OutputKeys.METHOD, "xml");
-            tr.setOutputProperty(OutputKeys.ENCODING, "UTF-8");
-            //tr.setOutputProperty(OutputKeys.DOCTYPE_SYSTEM, "roles.dtd");
-            tr.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
-
-            // send DOM to file
-            tr.transform(new DOMSource(dom), new StreamResult(new FileOutputStream(graphmlPath)));
-
-            //Flush old graph and starts anew
-            resetLogger();
-
-        } catch (IOException | TransformerException | ParserConfigurationException te) {
-            System.out.println(te.getMessage());
-        }
+        //Flush old graph and starts anew
+        resetLogger();
     }
 }

@@ -221,7 +221,7 @@ public class Label {
 
             logger.addNode(edgeIteratorState.getBaseNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), baseNodeType, "", findNodesStep);
             logger.addNode(edgeIteratorState.getAdjNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getAdjNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getAdjNode()), adjNodeType, "", findNodesStep);
-            logger.addEdge(edgeLabelStr, edgeIteratorState.getEdge(), edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode());
+            logger.addEdge(edgeLabelStr, edgeIteratorState.getEdge(), edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), findNodesStep);
         }
         else {
             //logger.addNode(label.adjNode, queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), GtfsGraphLogger.NodeLogType.OSM_NODE, "");
