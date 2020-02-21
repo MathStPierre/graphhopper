@@ -29,7 +29,6 @@ import com.graphhopper.routing.querygraph.QueryGraph;
 import com.graphhopper.routing.querygraph.VirtualEdgeIteratorState;
 import com.graphhopper.routing.util.DefaultEdgeFilter;
 import com.graphhopper.routing.util.EdgeFilter;
-import com.graphhopper.routing.util.EncodingManager;
 import com.graphhopper.routing.weighting.FastestWeighting;
 import com.graphhopper.routing.weighting.Weighting;
 import com.graphhopper.storage.Graph;
@@ -39,15 +38,19 @@ import com.graphhopper.storage.index.QueryResult;
 import com.graphhopper.util.*;
 import com.graphhopper.util.exceptions.PointNotFoundException;
 import com.graphhopper.util.shapes.GHPoint;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.inject.Inject;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
+import javax.xml.parsers.ParserConfigurationException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import static java.util.Comparator.comparingLong;
 
@@ -62,6 +65,9 @@ public final class PtRouteResource {
     private final GtfsStorage gtfsStorage;
     private final RealtimeFeed realtimeFeed;
     private final TripFromLabel tripFromLabel;
+
+	private Logger logger = LoggerFactory.getLogger(getClass());
+
 
     @Inject
     public PtRouteResource(TranslationMap translationMap, GraphHopperStorage graphHopperStorage, LocationIndex locationIndex, GtfsStorage gtfsStorage, RealtimeFeed realtimeFeed) {
@@ -87,7 +93,18 @@ public final class PtRouteResource {
                             @QueryParam("locale") String localeStr,
                             @QueryParam("pt.ignore_transfers") Boolean ignoreTransfers,
                             @QueryParam("pt.profile") Boolean profileQuery,
-                            @QueryParam("pt.limit_solutions") Integer limitSolutions) {
+                            @QueryParam("pt.limit_solutions") Integer limitSolutions,
+                            @QueryParam("out_explored_nodes") @DefaultValue("false") boolean out_explored_nodes) {
+
+        GtfsGraphLogger exploredNodeLogger = null;
+
+        if (out_explored_nodes) {
+            try {
+                exploredNodeLogger = new GtfsGraphLogger();
+            } catch (ParserConfigurationException e) {
+                throw new ExceptionInInitializerError(e);
+            }
+        }
 
         if (departureTimeString == null) {
             throw new BadRequestException(String.format(Locale.ROOT, "Illegal value for required parameter %s: [%s]", "pt.earliest_departure_time", departureTimeString));
@@ -105,9 +122,12 @@ public final class PtRouteResource {
         Optional.ofNullable(ignoreTransfers).ifPresent(request::setIgnoreTransfers);
         Optional.ofNullable(localeStr).ifPresent(s -> request.setLocale(Helper.getLocale(s)));
         Optional.ofNullable(limitSolutions).ifPresent(request::setLimitSolutions);
+        Optional.ofNullable(exploredNodeLogger).ifPresent(request::setGtfsGraphLogger);
 
         GHResponse route = new RequestHandler(request).route();
-        return WebHelper.jsonObject(route, true, true, false, false, 0.0f);
+        ObjectNode jsonResponse = WebHelper.jsonObject(route, true, true, false, false, 0.0f);
+        Optional.ofNullable(exploredNodeLogger).ifPresent(logger -> logger.appendNodes(jsonResponse));
+        return jsonResponse;
     }
 
     public GHResponse route(Request request) {
@@ -141,6 +161,7 @@ public final class PtRouteResource {
     }
 
     private class RequestHandler {
+
         private final int maxVisitedNodesForRequest;
         private final int limitSolutions;
         private final long maxProfileDuration = Duration.ofHours(4).toMillis();
@@ -156,6 +177,8 @@ public final class PtRouteResource {
         private final GHLocation exit;
         private final Translation translation;
         private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>(realtimeFeed.getAdditionalEdges());
+        private final GtfsGraphLogger exploredNodeLogger;
+        private Consumer<EdgeIteratorState> exploreAdjacentNodeLogger;
 
         private final GHResponse response = new GHResponse();
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
@@ -173,7 +196,9 @@ public final class PtRouteResource {
             arriveBy = request.isArriveBy();
             walkSpeedKmH = request.getWalkSpeedKmH();
             blockedRouteTypes = request.getBlockedRouteTypes();
+            exploredNodeLogger = request.getGtfsGraphLogger();
             translation = translationMap.getWithFallBack(request.getLocale());
+
             if (request.getPoints().size() != 2) {
                 throw new IllegalArgumentException("Exactly 2 points have to be specified, but was:" + request.getPoints().size());
             }
@@ -256,15 +281,24 @@ public final class PtRouteResource {
 
         private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
             StopWatch stopWatch = new StopWatch().start();
+
+            StopWatch stopWatchStep1 = new StopWatch().start();
+
             final GraphExplorer accessEgressGraphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, !arriveBy, true, walkSpeedKmH, false);
             boolean reverse = !arriveBy;
+
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
+
+            Optional.ofNullable(exploredNodeLogger).ifPresent(log -> stationRouter.setExploredAdjacantNodeLogger((l) -> Label.logLabel(exploredNodeLogger, l, false, ptEncodedValues, queryGraph, false, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH)));
+
             stationRouter.setBetaWalkTime(betaWalkTime);
             Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime, blockedRouteTypes).iterator();
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
+                Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, true, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH));
+
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
                     break;
@@ -278,6 +312,11 @@ public final class PtRouteResource {
             for (Label stationLabel : stationLabels) {
                 reverseSettledSet.put(stationLabel.adjNode, stationLabel);
             }
+
+            stopWatchStep1.stop();
+            logger.info("1- backward search step duration: " + stopWatchStep1.getSeconds());
+
+            StopWatch stopWatchStep2 = new StopWatch().start();
 
             GraphExplorer graphExplorer = new GraphExplorer(queryGraph, accessEgressWeighting, ptEncodedValues, gtfsStorage, realtimeFeed, arriveBy, false, walkSpeedKmH, false);
             List<Label> discoveredSolutions = new ArrayList<>();
@@ -293,10 +332,14 @@ public final class PtRouteResource {
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime, blockedRouteTypes).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
 
+            Optional.ofNullable(exploredNodeLogger).ifPresent(log -> router.setExploredAdjacantNodeLogger((l) -> Label.logLabel(exploredNodeLogger, l, false, ptEncodedValues, queryGraph, false, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH)));
+
             Label walkSolution = null;
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
+                Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph,true,  GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH));
+
                 // For single-criterion or pareto queries, we run to the end.
                 //
                 // For profile queries, we need a limited time window. Limiting the number of solutions is not
@@ -345,6 +388,12 @@ public final class PtRouteResource {
                 }
             }
 
+			stopWatchStep2.stop();
+            logger.info("2- forward search step duration: " + stopWatchStep2.getSeconds());
+
+			StopWatch stopWatchStep3 = new StopWatch();
+            stopWatchStep3.start();
+
             List<List<Label.Transition>> paths = new ArrayList<>();
             for (Label discoveredSolution : discoveredSolutions) {
                 Label originalSolution = originalSolutions.get(discoveredSolution);
@@ -370,6 +419,9 @@ public final class PtRouteResource {
                 }
             }
 
+            stopWatchStep3.stop();
+            logger.info("3- walking path step duration: " + stopWatchStep3.getSeconds());
+
             visitedNodes += router.getVisitedNodes();
             response.addDebugInfo("routing:" + stopWatch.stop().getSeconds() + "s");
             if (discoveredSolutions.isEmpty() && router.getVisitedNodes() >= maxVisitedNodesForRequest) {
@@ -380,7 +432,28 @@ public final class PtRouteResource {
             if (discoveredSolutions.isEmpty()) {
                 response.addError(new RuntimeException("No route found"));
             }
+
+            if (exploredNodeLogger != null) {
+                List<Label.Transition> path = paths.get(0);
+
+                path.forEach(t -> {
+                    Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, t.label, false, ptEncodedValues, queryGraph, true, GtfsGraphLogger.FindNodesStep.RESULT));
+                });
+
+                String graphmlOutputDir = System.getenv("GH_GTFS_GRAPH_LOGGER_OUTPUT_DIR");
+                if (graphmlOutputDir != null) {
+
+                    try {
+                        exploredNodeLogger.exportGraphmlToFile(graphmlOutputDir);
+                    }
+                    catch(Exception e) {
+                        logger.warn("Cannot create graphml file : " + e.getMessage());
+                    }
+                }
+            }
+
             return paths;
+
         }
 
         private boolean profileFinished(MultiCriteriaLabelSetting router, List<Label> discoveredSolutions, Label walkSolution) {

@@ -39,6 +39,7 @@ public class Request {
     private double walkSpeedKmH = 5.0;
     private int blockedRouteTypes;
     private Locale locale = Helper.getLocale("en");
+    private GtfsGraphLogger gtfsGraphLogger;
 
     public Request(List<GHLocation> points, Instant departureTime) {
         this.points = points;
@@ -140,5 +141,9 @@ public class Request {
     public List<GHLocation> getPoints() {
         return points;
     }
+
+    public GtfsGraphLogger getGtfsGraphLogger() {return gtfsGraphLogger;}
+
+    public void setGtfsGraphLogger(GtfsGraphLogger graphLogger) {this.gtfsGraphLogger = graphLogger;}
 
 }
