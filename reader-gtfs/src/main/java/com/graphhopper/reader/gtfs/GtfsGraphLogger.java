@@ -92,23 +92,19 @@ public class GtfsGraphLogger {
         BACKWARD_SEARCH, FORWARD_SEARCH, RESULT
     }
 
-//    private DocumentBuilderFactory dbf;
-//    private DocumentBuilder db;
-//    private Document dom;
-//    private Element graphEle;
-//    private String graphmlPath;
     private boolean outputCsv = true;
     BufferedWriter csvReportWriter = null;
 
     class NodeInfo {
 
-        NodeInfo(String nodeText, NodeLogType type, double lon, double lat, double xPos, double yPos, FindNodesStep step, int exploredSequence) {
+        NodeInfo(String nodeText, NodeLogType type, double lon, double lat, double xPos, double yPos, boolean expanded, FindNodesStep step, int exploredSequence) {
             this.nodeText = nodeText;
             this.type = type;
             this.xPos = xPos;
             this.yPos = yPos;
             this.lon = lon;
             this.lat = lat;
+            this.expanded = expanded;
             this.findNodesStep = step;
             this.exploredSequence = exploredSequence;
         }
@@ -119,8 +115,10 @@ public class GtfsGraphLogger {
         public double yPos;
         public double lat;
         public double lon;
+        public boolean expanded;
         public FindNodesStep findNodesStep;
         public int exploredSequence;
+
     }
 
     class EdgeInfo {
@@ -248,31 +246,6 @@ public class GtfsGraphLogger {
 
         insertedNodes.clear();
         insertedEdges.clear();
-
-//        dbf = DocumentBuilderFactory.newInstance();
-//        db = dbf.newDocumentBuilder();
-//        dom = db.newDocument();
-//
-//        Element rootEle = appendXmlNode(dom, null, "graphml", "xmlns=http://graphml.graphdrawing.org/xmlns xmlns:java=http://www.yworks.com/xml/yfiles-common/1.0/java xmlns:sys=http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0 xmlns:x=http://www.yworks.com/xml/yfiles-common/markup/2.0 xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:xsi=http://www.w3.org/2001/XMLSchema-instance xmlns:y=http://www.yworks.com/xml/graphml xmlns:yed=http://www.yworks.com/xml/yed/3 xsi:schemaLocation=http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd");
-//        appendXmlNode(dom, rootEle, "key", "attr.name=Description attr.type=string for=graph id=d0");
-//        appendXmlNode(dom, rootEle, "key", "for=port id=d1 yfiles.type=portgraphics");
-//        appendXmlNode(dom, rootEle, "key", "for=port id=d2 yfiles.type=portgeometry");
-//        appendXmlNode(dom, rootEle, "key", "for=port id=d3 yfiles.type=portuserdata");
-//        appendXmlNode(dom, rootEle, "key", "attr.name=url attr.type=string for=node id=d4");
-//        appendXmlNode(dom, rootEle, "key", "attr.name=description attr.type=string for=node id=d5");
-//        appendXmlNode(dom, rootEle, "key", "for=node id=d6 yfiles.type=nodegraphics");
-//        appendXmlNode(dom, rootEle, "key", "for=graphml id=d7 yfiles.type=resources");
-//        appendXmlNode(dom, rootEle, "key", "attr.name=url attr.type=string for=edge id=d8");
-//        appendXmlNode(dom, rootEle, "key", "attr.name=description attr.type=string for=edge id=d9");
-//        appendXmlNode(dom, rootEle, "key", "for=edge id=d10 yfiles.type=edgegraphics");
-//
-//        graphEle = dom.createElement("graph");
-//        graphEle.setAttribute("edgedefault", "directed");
-//        graphEle.setAttribute("id", "G");
-//
-//        rootEle.appendChild(graphEle);
-//
-//        dom.appendChild(rootEle);
     }
 
     private double getXPos(NodeLogType type) {
@@ -333,16 +306,17 @@ public class GtfsGraphLogger {
         findNextTripColor();
     }
 
-    public void addNode(int id, double x, double y, NodeLogType type, String nodeText, FindNodesStep step) {
-        addNode(String.valueOf(id), x, y, type, nodeText, step);
+    public void addNode(int id, double x, double y, NodeLogType type, String nodeText, boolean expanded, FindNodesStep step) {
+        addNode(String.valueOf(id), x, y, type, nodeText, expanded, step);
     }
 
-    public void addNode(String id, double x, double y, NodeLogType type, String nodeText, FindNodesStep step) {
+    public void addNode(String id, double x, double y, NodeLogType type, String nodeText, boolean expanded, FindNodesStep step) {
 
         Map<String, NodeInfo> nodesMap = insertedNodes.get(step);
 
         //Avoid creating duplicate nodes.
         if (nodesMap != null && nodesMap.containsKey(id)) {
+            nodesMap.get(id).expanded |= expanded;
             return;
         }
 
@@ -360,54 +334,7 @@ public class GtfsGraphLogger {
             nodesMap = insertedNodes.get(step);
         }
 
-        nodesMap.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos, step, nodesMap.size()));
-
-        //Hack to avoid having same node id in graphml export.
-        for (Map<String, NodeInfo> nodesMapV : insertedNodes.values()) {
-            if (nodesMapV.containsKey(id)) {
-                return;
-            }
-        }
-
-//        Element nodeEle = appendXmlNode(dom, graphEle, "node", "id=" + id);
-//        appendXmlNode(dom, graphEle, "data", "key=d0");
-//        Element dataNodeEle = appendXmlNode(dom, nodeEle, "data", "key=d6");
-//        Element shapeNodeEle = appendXmlNode(dom, dataNodeEle, "y:ShapeNode", "");
-//        appendXmlNode(dom, shapeNodeEle, "y:Geometry", "key=d6 height=40.0 width=75.0 x=" + String.valueOf(xPos) + " y=" + String.valueOf(yPos));
-//
-//        String fillEleAttrs = "transparent=false color=";
-//
-//        switch (type) {
-//            case OSM_NODE:
-//                fillEleAttrs += String.format("#%02x%02x%02x", OSM_NODE_COLOR.getRed(), OSM_NODE_COLOR.getGreen(), OSM_NODE_COLOR.getBlue()); //Black
-//                break;
-//            case ENTER_EXIT_PT:
-//                fillEleAttrs += String.format("#%02x%02x%02x", STOP_NODE_COLOR.getRed(), STOP_NODE_COLOR.getGreen(), STOP_NODE_COLOR.getBlue()); //Red
-//                break;
-//            default:
-//                fillEleAttrs += String.format("#%02x%02x%02x", currentTripColor.getRed(), currentTripColor.getGreen(), currentTripColor.getBlue());
-//                break;
-//        }
-//
-//        appendXmlNode(dom, shapeNodeEle, "y:Fill", fillEleAttrs);
-//        appendXmlNode(dom, shapeNodeEle, "y:BorderStyle", "color=#000000 type=line width=1.0");
-//
-//        Element nodeLabelEle = appendXmlNode(dom, shapeNodeEle, "y:NodeLabel", "alignment=center autoSizePolicy=content fontFamily=Dialog fontSize=16 fontStyle=plain hasBackgroundColor=false " +
-//                                                                                            "hasLineColor=false hasText=true height=4.0 modelName=custom textColor=" +
-//                                                                                             String.format("#%02x%02x%02x", NODE_TEXT_COLOR.getRed(), NODE_TEXT_COLOR.getGreen(), NODE_TEXT_COLOR.getBlue()) +
-//                                                                                            " visible=true width=4.0 x=13.0 y=13.0");
-//
-//        if (!nodeText.isEmpty()) {
-//            Text textNode = dom.createTextNode(nodeText);
-//            nodeLabelEle.appendChild(textNode);
-//        }
-//
-//        Element labelModelEle = appendXmlNode(dom, nodeLabelEle, "y:LabelModel", "");
-//        appendXmlNode(dom, labelModelEle, "y:SmartNodeLabelModel", "distance=4.0");
-//
-//        Element modelParamEle = appendXmlNode(dom, nodeLabelEle, "y:ModelParameter", "");
-//        appendXmlNode(dom, modelParamEle, "y:SmartNodeLabelModelParameter", "labelRatioX=0.0 labelRatioY=0.0 nodeRatioX=0.0 nodeRatioY=0.0 offsetX=0.0 offsetY=0.0 upX=0.0 upY=-1.0");
-//        appendXmlNode(dom, shapeNodeEle, "y:Shape", "type=ellipse");
+        nodesMap.put(id, new NodeInfo(nodeText, type, x, y, xPos, yPos, expanded, step, nodesMap.size()));
     }
 
     public ObjectNode appendNodes(ObjectNode geoJson) {
@@ -429,6 +356,7 @@ public class GtfsGraphLogger {
             props.put("type", nInfo.type.toString());
             props.put("text", nInfo.nodeText);
             props.put("step", nInfo.findNodesStep.toString());
+            props.put("expanded", nInfo.expanded);
             props.put("exploreSequence", nInfo.exploredSequence);
         }));
 
@@ -575,8 +503,5 @@ public class GtfsGraphLogger {
                 System.out.println(te.getMessage());
             }
         }
-
-        //Flush old graph and starts anew
-        resetLogger();
     }
 }

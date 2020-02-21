@@ -290,14 +290,14 @@ public final class PtRouteResource {
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
 
-            Optional.ofNullable(exploredNodeLogger).ifPresent(log -> stationRouter.setExploredAdjacantNodeLogger((l) -> Label.logLabel(exploredNodeLogger, l, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH)));
+            Optional.ofNullable(exploredNodeLogger).ifPresent(log -> stationRouter.setExploredAdjacantNodeLogger((l) -> Label.logLabel(exploredNodeLogger, l, false, ptEncodedValues, queryGraph, false, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH)));
 
             stationRouter.setBetaWalkTime(betaWalkTime);
             Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime, blockedRouteTypes).iterator();
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
                 Label label = stationIterator.next();
-                Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH));
+                Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, true, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH));
 
                 if (label.adjNode == startNode) {
                     stationLabels.add(label);
@@ -332,13 +332,13 @@ public final class PtRouteResource {
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime, blockedRouteTypes).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
 
-            Optional.ofNullable(exploredNodeLogger).ifPresent(log -> router.setExploredAdjacantNodeLogger((l) -> Label.logLabel(exploredNodeLogger, l, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH)));
+            Optional.ofNullable(exploredNodeLogger).ifPresent(log -> router.setExploredAdjacantNodeLogger((l) -> Label.logLabel(exploredNodeLogger, l, false, ptEncodedValues, queryGraph, false, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH)));
 
             Label walkSolution = null;
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
-                Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH));
+                Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, label, false, ptEncodedValues, queryGraph,true,  GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH));
 
                 // For single-criterion or pareto queries, we run to the end.
                 //
@@ -437,7 +437,7 @@ public final class PtRouteResource {
                 List<Label.Transition> path = paths.get(0);
 
                 path.forEach(t -> {
-                    Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, t.label, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.RESULT));
+                    Optional.ofNullable(exploredNodeLogger).ifPresent(log -> Label.logLabel(log, t.label, false, ptEncodedValues, queryGraph, true, GtfsGraphLogger.FindNodesStep.RESULT));
                 });
 
                 String graphmlOutputDir = System.getenv("GH_GTFS_GRAPH_LOGGER_OUTPUT_DIR");

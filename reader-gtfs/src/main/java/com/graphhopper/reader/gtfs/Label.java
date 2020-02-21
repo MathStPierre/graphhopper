@@ -136,19 +136,19 @@ public class Label {
     }
 
 
-    public static void logLabel(GtfsGraphLogger logger, Label label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, GtfsGraphLogger.FindNodesStep findNodesStep) {
+    public static void logLabel(GtfsGraphLogger logger, Label label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, boolean expanded, GtfsGraphLogger.FindNodesStep findNodesStep) {
 
         if (label.edge != -1) {
             boolean reverseEdgeFlags = !arriveBy;
             EdgeIteratorState edgeIteratorState = queryGraph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
-            logLabel(logger, edgeIteratorState, arriveBy, encoder, queryGraph, findNodesStep);
+            logLabel(logger, edgeIteratorState, arriveBy, encoder, queryGraph, expanded, findNodesStep);
             }
         else {
          //   logger.addNode(label.adjNode, queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), GtfsGraphLogger.NodeLogType.OSM_NODE, "");
         }
     }
 
-    public static void logLabel(GtfsGraphLogger logger, EdgeIteratorState edgeIteratorState, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, GtfsGraphLogger.FindNodesStep findNodesStep) {
+    public static void logLabel(GtfsGraphLogger logger, EdgeIteratorState edgeIteratorState, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, boolean expanded, GtfsGraphLogger.FindNodesStep findNodesStep) {
 
         String logHighwayEdge = System.getenv("GH_GTFS_LOG_HIGHWAY_EDGE_GRAPH_LOGGER");
 
@@ -230,8 +230,8 @@ public class Label {
                     break;
             }
 
-            logger.addNode(edgeIteratorState.getBaseNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), baseNodeType, "", findNodesStep);
-            logger.addNode(edgeIteratorState.getAdjNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getAdjNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getAdjNode()), adjNodeType, "", findNodesStep);
+            logger.addNode(edgeIteratorState.getBaseNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), baseNodeType, "", expanded, findNodesStep);
+            logger.addNode(edgeIteratorState.getAdjNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getAdjNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getAdjNode()), adjNodeType, "", expanded, findNodesStep);
             logger.addEdge(edgeLabelStr, edgeIteratorState.getEdge(), edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), findNodesStep);
     }
 }
