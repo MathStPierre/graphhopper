@@ -135,13 +135,24 @@ public class Label {
                 edgeIteratorState.get(flagEncoder.getTransfersEnc()), edgeIteratorState.getDistance());
     }
 
+
     public static void logLabel(GtfsGraphLogger logger, Label label, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, GtfsGraphLogger.FindNodesStep findNodesStep) {
 
-        String logHighwayEdge = System.getenv("GH_GTFS_LOG_HIGHWAY_EDGE_GRAPH_LOGGER");
-        boolean reverseEdgeFlags = !arriveBy;
-
         if (label.edge != -1) {
+            boolean reverseEdgeFlags = !arriveBy;
             EdgeIteratorState edgeIteratorState = queryGraph.getEdgeIteratorState(label.edge, reverseEdgeFlags ? label.adjNode : label.parent.adjNode).detach(false);
+            logLabel(logger, edgeIteratorState, arriveBy, encoder, queryGraph, findNodesStep);
+            }
+        else {
+         //   logger.addNode(label.adjNode, queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), GtfsGraphLogger.NodeLogType.OSM_NODE, "");
+        }
+    }
+
+    public static void logLabel(GtfsGraphLogger logger, EdgeIteratorState edgeIteratorState, boolean arriveBy, PtEncodedValues encoder, Graph queryGraph, GtfsGraphLogger.FindNodesStep findNodesStep) {
+
+        String logHighwayEdge = System.getenv("GH_GTFS_LOG_HIGHWAY_EDGE_GRAPH_LOGGER");
+
+
             EdgeLabel edgeLabel = Label.getEdgeLabel(edgeIteratorState, encoder);
 
             String edgeLabelStr = "";
@@ -222,9 +233,5 @@ public class Label {
             logger.addNode(edgeIteratorState.getBaseNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), baseNodeType, "", findNodesStep);
             logger.addNode(edgeIteratorState.getAdjNode(), queryGraph.getNodeAccess().getLon(edgeIteratorState.getAdjNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getAdjNode()), adjNodeType, "", findNodesStep);
             logger.addEdge(edgeLabelStr, edgeIteratorState.getEdge(), edgeIteratorState.getBaseNode(), edgeIteratorState.getAdjNode(), findNodesStep);
-        }
-        else {
-            //logger.addNode(label.adjNode, queryGraph.getNodeAccess().getLon(edgeIteratorState.getBaseNode()), queryGraph.getNodeAccess().getLat(edgeIteratorState.getBaseNode()), GtfsGraphLogger.NodeLogType.OSM_NODE, "");
-        }
     }
 }

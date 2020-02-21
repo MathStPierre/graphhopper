@@ -20,7 +20,9 @@ package com.graphhopper.reader.gtfs;
 import com.carrotsearch.hppc.IntObjectHashMap;
 import com.carrotsearch.hppc.IntObjectMap;
 import com.graphhopper.routing.profiles.IntEncodedValue;
+import com.graphhopper.storage.Graph;
 import com.graphhopper.util.EdgeIterator;
+import com.graphhopper.util.EdgeIteratorState;
 
 import java.time.Instant;
 import java.util.*;
@@ -60,6 +62,9 @@ public class MultiCriteriaLabelSetting {
     private final GraphExplorer explorer;
     private double betaTransfers;
     private double betaWalkTime = 1.0;
+    private GtfsGraphLogger gtfsGraphLogger;
+    private Graph graph;
+    private Consumer<EdgeIteratorState> exploredAdjacentNodeLogger;
 
     public MultiCriteriaLabelSetting(GraphExplorer explorer, PtEncodedValues flagEncoder, boolean reverse, boolean ptOnly, boolean mindTransfers, boolean profileQuery, int maxVisitedNodes, List<Label> solutions) {
         this.flagEncoder = flagEncoder;
@@ -109,6 +114,15 @@ public class MultiCriteriaLabelSetting {
         this.betaWalkTime = betaWalkTime;
     }
 
+    void setGtfsGraphLogger(GtfsGraphLogger logger, Graph graph) {
+        this.gtfsGraphLogger = logger;
+        this.graph = graph;
+    }
+
+    void setExploredAdjacantNodeLogger(Consumer<EdgeIteratorState> adjacentNodeLogger) {
+        this.exploredAdjacentNodeLogger = adjacentNodeLogger;
+    }
+
     private class MultiCriteriaLabelSettingSpliterator extends Spliterators.AbstractSpliterator<Label> {
 
         MultiCriteriaLabelSettingSpliterator(int from) {
@@ -129,7 +143,10 @@ public class MultiCriteriaLabelSetting {
                 action.accept(label);
                 final IntEncodedValue validityEnc = flagEncoder.getValidityIdEnc();
                 explorer.exploreEdgesAround(label).forEach(edge -> {
+
+                    Optional.ofNullable(exploredAdjacentNodeLogger).ifPresent(l -> l.accept(edge));
                     GtfsStorage.EdgeType edgeType = edge.get(flagEncoder.getTypeEnc());
+
                     if (edgeType == GtfsStorage.EdgeType.ENTER_PT && reverse && ptOnly) return;
                     if (edgeType == GtfsStorage.EdgeType.EXIT_PT && !reverse && ptOnly) return;
                     if ((edgeType == GtfsStorage.EdgeType.ENTER_PT || edgeType == GtfsStorage.EdgeType.EXIT_PT) && (blockedRouteTypes & (1 << edge.get(validityEnc))) != 0)

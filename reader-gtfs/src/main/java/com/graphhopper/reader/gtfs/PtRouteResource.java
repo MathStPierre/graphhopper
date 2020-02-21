@@ -50,6 +50,7 @@ import java.time.Instant;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import static java.util.Comparator.comparingLong;
 
@@ -177,6 +178,7 @@ public final class PtRouteResource {
         private final Translation translation;
         private final List<VirtualEdgeIteratorState> extraEdges = new ArrayList<>(realtimeFeed.getAdditionalEdges());
         private final GtfsGraphLogger exploredNodeLogger;
+        private Consumer<EdgeIteratorState> exploreAdjacentNodeLogger;
 
         private final GHResponse response = new GHResponse();
         private final Graph graphWithExtraEdges = new WrapperGraph(graphHopperStorage, extraEdges);
@@ -275,7 +277,6 @@ public final class PtRouteResource {
             Comparator<PathWrapper> c = Comparator.comparingInt(p -> (p.isImpossible() ? 1 : 0));
             Comparator<PathWrapper> d = Comparator.comparingDouble(PathWrapper::getTime);
             response.getAll().sort(c.thenComparing(d));
-
         }
 
         private List<List<Label.Transition>> findPaths(int startNode, int destNode) {
@@ -288,6 +289,9 @@ public final class PtRouteResource {
 
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
+
+            Optional.ofNullable(exploredNodeLogger).ifPresent(log -> stationRouter.setExploredAdjacantNodeLogger((l) -> Label.logLabel(exploredNodeLogger, l, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.BACKWARD_SEARCH)));
+
             stationRouter.setBetaWalkTime(betaWalkTime);
             Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime, blockedRouteTypes).iterator();
             List<Label> stationLabels = new ArrayList<>();
@@ -327,6 +331,8 @@ public final class PtRouteResource {
             }
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime, blockedRouteTypes).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
+
+            Optional.ofNullable(exploredNodeLogger).ifPresent(log -> router.setExploredAdjacantNodeLogger((l) -> Label.logLabel(exploredNodeLogger, l, false, ptEncodedValues, queryGraph, GtfsGraphLogger.FindNodesStep.FORWARD_SEARCH)));
 
             Label walkSolution = null;
             long highestWeightForDominationTest = Long.MAX_VALUE;
