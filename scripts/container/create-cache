@@ -1,0 +1,17 @@
+
+#!/bin/bash -xe
+
+echo "create-cache"
+
+#wget 'https://download.geofabrik.de/north-america/us/california/norcal-latest.osm.pbf'
+wget 'https://download.geofabrik.de/kanto.osm.pbf'
+
+java $JAVA_OPTS \
+  -Dgraphhopper.graph.location=graph-cache \
+  -Dgraphhopper.datareader.file=kanto.osm.pbf \
+  -Dgraphhopper.gtfs.file=rail.zip \
+  -jar target/graphhopper-1.0-SNAPSHOT.jar \
+  import \
+  resources/config.yml
+
+rm kanto.osm.pbf

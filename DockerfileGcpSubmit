@@ -1,0 +1,17 @@
+FROM maven:3-jdk-8
+
+ENV HOME=/graphhopper
+RUN mkdir -p $HOME
+
+WORKDIR /graphhopper
+
+# cache dependencies
+ADD pom.xml $HOME
+RUN mvn verify clean --fail-never
+
+# build with source
+ADD . $HOME
+RUN mvn install -DskipTests
+
+ENTRYPOINT ["sh", "./entrypoint.sh" ]
+
