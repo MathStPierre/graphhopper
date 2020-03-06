@@ -3,6 +3,11 @@ FROM maven:3-jdk-8
 ENV HOME=/graphhopper
 RUN mkdir -p $HOME
 
+# install node - only required for JS UI
+RUN apt-get install -y wget \
+       && curl -sL https://deb.nodesource.com/setup_11.x | bash - \
+       && apt-get install -y nodejs
+
 WORKDIR /graphhopper
 
 # cache dependencies
@@ -12,6 +17,9 @@ RUN mvn verify clean --fail-never
 # build with source
 ADD . $HOME
 RUN mvn install -DskipTests
+
+# create main.js - only required for JS UI
+RUN cd web && npm install && npm run bundleProduction && cd ..
 
 ENTRYPOINT ["sh", "./entrypoint.sh" ]
 

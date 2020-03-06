@@ -46,7 +46,7 @@ graphhopper:
   # To enable finite u-turn costs use something like fastest|u_turn_costs=30, where 30 are the u-turn costs in seconds
   # (given as integer). Note that since the u-turn costs are given in seconds the weighting you use should also
   # calculate the weight in seconds. The u-turn costs will only be applied for edge_based, see below.
-  #prepare.ch.weightings: fastest|u_turn_costs=30
+  prepare.ch.weightings: fastest|u_turn_costs=30
 
   # Turn costs can be enabled also for speed mode (contraction hierarchies), but this requires a special kind of graph
   # preparation (which uses edge- instead of node-based graph traversal), which takes more time and memory than a
@@ -64,7 +64,7 @@ graphhopper:
 
 
   # Disable the speed mode. Should be used only with routing.max_visited_nodes or when the hybrid mode is enabled instead
-  prepare.ch.weightings: no
+  #prepare.ch.weightings: no
 
 
   # To make CH preparation faster for multiple flagEncoders you can increase the default threads if you have enough RAM.
