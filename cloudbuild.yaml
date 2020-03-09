@@ -1,0 +1,56 @@
+steps:
+  # build the container image
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t",
+        "gcr.io/$PROJECT_ID/graphhopper:$COMMIT_SHA",
+        "-f",
+        "DockerfileGcpSubmit",
+        ".",
+      ]
+  # push the container image to Container Registry
+  - name: "gcr.io/cloud-builders/docker"
+    args: ["push", "gcr.io/$PROJECT_ID/graphhopper:$COMMIT_SHA"]
+
+  # Deploy container image to Cloud Container Engine
+  - name: "gcr.io/cloud-builders/gcloud"
+    args:
+      [
+        "beta",
+        "compute",
+        "--project",
+        "$PROJECT_ID",
+        "instances",
+        "create-with-container",
+        "gh-cloud-build-$COMMIT_SHA",
+        "--zone",
+        "us-west1-a",
+        "--machine-type",
+        "n1-standard-2",
+        "--subnet",
+        "gh-s1-us1-project-network",
+        "--network-tier",
+        "PREMIUM",
+        "--tags",
+        "http-server",
+        "--metadata",
+        "google-logging-enabled=true",
+        "--image",
+        "cos-stable-80-12739-78-0",
+        "--image-project",
+        "cos-cloud",
+        "--boot-disk-size",
+        "10GB",
+        "--boot-disk-type",
+        "pd-standard",
+        "--boot-disk-device-name",
+        "gh-cloud-build-$COMMIT_SHA",
+        "--container-image",
+        "gcr.io/$PROJECT_ID/graphhopper:$COMMIT_SHA",
+        "--labels",
+        "container-vm=cos-stable-80-12739-78-0",
+      ]
+images:
+  - "gcr.io/$PROJECT_ID/graphhopper:$COMMIT_SHA"

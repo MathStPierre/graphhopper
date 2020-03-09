@@ -1,0 +1,15 @@
+
+#!/bin/bash -xe
+
+echo "create-cache"
+
+wget 'https://download.geofabrik.de/north-america/canada/prince-edward-island-latest.osm.pbf'
+
+java $JAVA_OPTS \
+  -Ddw.graphhopper.graph.location=graph-cache \
+  -Ddw.graphhopper.datareader.file=prince-edward-island-latest.osm.pbf \
+  -jar web/target/graphhopper-web-1.0-SNAPSHOT.jar \
+  import \
+  scripts/container/config.yml
+
+rm prince-edward-island-latest.osm.pbf
