@@ -10,16 +10,17 @@ RUN apt-get install -y wget \
 
 WORKDIR /graphhopper
 
-# cache dependencies
-ADD pom.xml $HOME
-RUN mvn verify clean --fail-never
-
-# build with source
+#Copie code
 ADD . $HOME
-RUN mvn install -DskipTests
+
+# cache dependencies
+RUN mvn verify clean --fail-never
 
 # create main.js - only required for JS UI
 RUN cd web && npm install && npm run bundleProduction && cd ..
+
+# build with source
+RUN mvn install -DskipTests
 
 ENTRYPOINT ["sh", "./entrypoint.sh" ]
 
