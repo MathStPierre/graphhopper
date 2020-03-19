@@ -6,6 +6,16 @@
       <username>${env.CI_DEPLOY_USERNAME}</username>
       <password>${env.CI_DEPLOY_PASSWORD}</password>
     </server>
+    <server>
+        <id>central</id>
+        <username>${env.ARTIFACTORY_USER}</username>
+        <password>${env.ARTIFACTORY_PASS}</password>
+    </server>
+      <server>
+          <id>snapshots</id>
+          <username>${env.ARTIFACTORY_USER}</username>
+          <password>${env.ARTIFACTORY_PASS}</password>
+      </server>
   </servers>
   <profiles>
       <profile>
@@ -18,5 +28,43 @@
           <gpg.passphrase>${env.GPG_PASSPHRASE}</gpg.passphrase>
         </properties>
       </profile>
+      <profile>
+          <repositories>
+              <repository>
+                  <snapshots>
+                      <enabled>false</enabled>
+                  </snapshots>
+                  <id>central</id>
+                  <name>libs-release</name>
+                  <url>https://curbside.jfrog.io/curbside/libs-release-local</url>
+              </repository>
+              <repository>
+                  <snapshots />
+                  <id>snapshots</id>
+                  <name>libs-snapshot</name>
+                  <url>https://curbside.jfrog.io/curbside/libs-snapshot-local</url>
+              </repository>
+          </repositories>
+          <pluginRepositories>
+              <pluginRepository>
+                  <snapshots>
+                      <enabled>false</enabled>
+                  </snapshots>
+                  <id>central</id>
+                  <name>plugins-release</name>
+                  <url>https://curbside.jfrog.io/curbside/plugins-release</url>
+              </pluginRepository>
+              <pluginRepository>
+                  <snapshots />
+                  <id>snapshots</id>
+                  <name>plugins-release</name>
+                  <url>https://curbside.jfrog.io/curbside/plugins-release</url>
+              </pluginRepository>
+          </pluginRepositories>
+          <id>artifactory</id>
+      </profile>
     </profiles>
+    <activeProfiles>
+        <activeProfile>artifactory</activeProfile>
+    </activeProfiles>
 </settings>
