@@ -2,6 +2,9 @@ GIT_SHA  = $(shell git rev-parse HEAD)
 GCP_PROJECT ?= graphhopper-s1-e3ec
 ARTIFACTORY_USER ?= user
 ARTIFACTORY_PASS ?= pass
+RELEASE_TAG = gh-request-duration-optimization
+RELEASE_VERSION = 1.0
+DEV_VERSION = 1.0-CURBSIDE-SNAPSHOT
 
 
 

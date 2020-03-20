@@ -1,0 +1,29 @@
+#!/bin/bash -xe
+
+abort() {
+    echo >&2 "
+*** ABORTED ***
+: ${1}
+"
+    exit 1
+}
+
+# -- assertions (env/etc) --
+#[[ $(lein project-version) =~ SNAPSHOT ]] || abort "project must have SNAPSHOT version"
+[[ -n "${ARTIFACTORY_USER}" ]] || abort "missing ARTIFACTORY_USER"
+[[ -n "${ARTIFACTORY_PASS}" ]] || abort "missing ARTIFACTORY_PASS"
+#[[ `git status --porcelain` ]] && abort "some git files are modified"
+
+# -- clean --
+mvn clean
+
+# -- prepare git precisely for release --
+#git config user.name curbsidebot
+#git config user.email bot@curbside.in
+#git config --global push.default simple
+#git checkout master
+#git branch --set-upstream-to origin/master
+
+# -- release! (will build jar, too) --
+mvn install -DskipTests
+mvn --batch-mode -Dtag=${RELEASE_TAG} -DpreparationGoals=clean release:prepare -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${DEV_VERSION}

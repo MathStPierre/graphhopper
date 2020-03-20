@@ -1,0 +1,22 @@
+#!/bin/bash -xe
+
+abort() {
+    echo >&2 "
+*** ABORTED ***
+: ${1}
+"
+    exit 1
+}
+
+# -- assertions (env/etc) --
+[[ -n "${ARTIFACTORY_USER}" ]] || abort "missing ARTIFACTORY_USER"
+[[ -n "${ARTIFACTORY_PASS}" ]] || abort "missing ARTIFACTORY_PASS"
+[[ `git status --porcelain` ]] && abort "some git files are modified"
+
+# -- clean --
+mvn clean
+
+# -- deploy! (will build jar, too) --
+mvn -e deploy --settings core/files/settings.xml -DskipTests
+
+
