@@ -44,11 +44,10 @@
     </properties>
 
     <scm>
-        <connection>scm:git:git@github.com:RakutenReady/graphhopper.git</connection>
-        <developerConnection>scm:git:git@github.com:RakutenReady/graphhopper.git</developerConnection>
-        <url>git@github.com:RakutenReady/graphhopper.git</url>
-      <tag></tag>
-  </scm>
+        <connection>scm:git:git@github.com:MathStPierre/graphhopper.git</connection>
+        <developerConnection>scm:git:git@github.com:MathStPierre/graphhopper.git</developerConnection>
+        <url>git@github.com:MathStPierre/graphhopper.git</url>
+    </scm>
 
     <licenses>
         <license>
@@ -155,6 +154,16 @@
                     <linkXRef>false</linkXRef>
                 </configuration>
             </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-release-plugin</artifactId>
+                <version>2.4.2</version>
+                <configuration>
+                    <tagNameFormat>v@{project.version}</tagNameFormat>
+                    <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <releaseProfiles>release</releaseProfiles>
+                </configuration>
+            </plugin>
 
 	    <!--
             <plugin>
@@ -210,98 +219,31 @@
     <distributionManagement>
         <repository>
             <uniqueVersion>true</uniqueVersion>
-            <id>releases</id>
+            <id>central</id>
             <name>libs-release</name>
             <url>https://curbside.jfrog.io/curbside/libs-release-local</url>
-            <layout>default</layout>
         </repository>
         <snapshotRepository>
             <id>snapshots</id>
             <name>libs-snapshot</name>
             <url>https://curbside.jfrog.io/curbside/libs-snapshot-local</url>
-            <layout>default</layout>
         </snapshotRepository>
     </distributionManagement>
 
-
-
-    <!-- mvn clean deploy -P release -->
-    <profiles>
-        <profile>
-            <id>release</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.8</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                        </configuration>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <configuration>
-                          <quiet>true</quiet>
-                        </configuration>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>3.1.0</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-        <profile>
-            <id>include-android</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>android/app</module>
-            </modules>
-        </profile>
-
-    </profiles>
-
+    <repositories>
+        <repository>
+            <snapshots>
+                <enabled>false</enabled>
+            </snapshots>
+            <id>central</id>
+            <name>libs-release</name>
+            <url>http://localhost:8081/artifactory/libs-release</url>
+        </repository>
+        <repository>
+            <snapshots />
+            <id>snapshots</id>
+            <name>libs-snapshot</name>
+            <url>http://localhost:8081/artifactory/libs-snapshot</url>
+        </repository>
+    </repositories>
 </project>
