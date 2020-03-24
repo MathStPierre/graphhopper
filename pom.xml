@@ -44,9 +44,9 @@
     </properties>
 
     <scm>
-        <connection>scm:git:git@github.com:graphhopper/graphhopper.git</connection>
-        <developerConnection>scm:git:git@github.com:graphhopper/graphhopper.git</developerConnection>
-        <url>git@github.com:graphhopper/graphhopper.git</url>
+        <connection>scm:git:git@github.com:RakutenReady/graphhopper.git</connection>
+        <developerConnection>scm:git:git@github.com:RakutenReady/graphhopper.git</developerConnection>
+        <url>git@github.com:RakutenReady/graphhopper.git</url>
       <tag></tag>
   </scm>
 
