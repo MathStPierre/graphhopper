@@ -34,7 +34,7 @@
                   <snapshots>
                       <enabled>false</enabled>
                   </snapshots>
-                  <id>central</id>
+                  <id>releases</id>
                   <name>libs-release</name>
                   <url>https://curbside.jfrog.io/curbside/libs-release-local</url>
               </repository>

@@ -5,7 +5,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>1.0</version>
+    <version>1.0-CURBSIDE-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -208,12 +208,22 @@
     </build>
 
     <distributionManagement>
+        <repository>
+            <uniqueVersion>true</uniqueVersion>
+            <id>releases</id>
+            <name>libs-release</name>
+            <url>https://curbside.jfrog.io/curbside/libs-release-local</url>
+            <layout>default</layout>
+        </repository>
         <snapshotRepository>
             <id>snapshots</id>
-            <name>graphhopper-snapshots</name>
+            <name>libs-snapshot</name>
             <url>https://curbside.jfrog.io/curbside/libs-snapshot-local</url>
+            <layout>default</layout>
         </snapshotRepository>
     </distributionManagement>
+
+
 
     <!-- mvn clean deploy -P release -->
     <profiles>
