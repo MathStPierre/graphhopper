@@ -9,7 +9,7 @@ abort() {
 }
 
 
-RELEASE_TAG=release-test2
+RELEASE_TAG=release-test7
 RELEASE_VERSION=1.4
 DEV_VERSION=1.5-SNAPSHOT
 
