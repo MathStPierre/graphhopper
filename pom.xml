@@ -89,43 +89,6 @@
         <module>web</module>
         <module>client-hc</module>
     </modules>
-    <profiles>
-        <profile>
-            <repositories>
-                <repository>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                    <id>central</id>
-                    <name>libs-release</name>
-                    <url>https://curbside.jfrog.io/curbside/libs-release-local</url>
-                </repository>
-                <repository>
-                    <snapshots />
-                    <id>snapshots</id>
-                    <name>libs-snapshot</name>
-                    <url>https://curbside.jfrog.io/curbside/libs-snapshot-local</url>
-                </repository>
-            </repositories>
-            <pluginRepositories>
-                <pluginRepository>
-                    <snapshots>
-                        <enabled>false</enabled>
-                    </snapshots>
-                    <id>central</id>
-                    <name>plugins-release</name>
-                    <url>https://curbside.jfrog.io/curbside/plugins-release</url>
-                </pluginRepository>
-                <pluginRepository>
-                    <snapshots />
-                    <id>snapshots</id>
-                    <name>plugins-release</name>
-                    <url>https://curbside.jfrog.io/curbside/plugins-release</url>
-                </pluginRepository>
-            </pluginRepositories>
-            <id>artifactory</id>
-        </profile>
-    </profiles>
 
     <build>
         <plugins>
@@ -287,20 +250,4 @@
         </snapshotRepository>
     </distributionManagement>
 
-    <repositories>
-        <repository>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>central</id>
-            <name>libs-release</name>
-            <url>https://curbside.jfrog.io/curbside/libs-release</url>
-        </repository>
-        <repository>
-            <snapshots />
-            <id>snapshots</id>
-            <name>libs-snapshot</name>
-            <url>https://curbside.jfrog.io/curbside/libs-snapshot</url>
-        </repository>
-    </repositories>
 </project>

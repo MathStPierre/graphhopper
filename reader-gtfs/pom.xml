@@ -86,7 +86,7 @@
         <dependency>
             <groupId>org.webjars.npm</groupId>
             <artifactId>react</artifactId>
-            <version>16.10.2</version>
+            <version>16.13.1</version>
         </dependency>
         <dependency>
             <groupId>org.webjars.npm</groupId>
@@ -102,6 +102,11 @@
             <groupId>org.webjars</groupId>
             <artifactId>momentjs</artifactId>
             <version>2.24.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.webjars.npm</groupId>
+            <artifactId>loose-envify</artifactId>
+            <version>1.4.0</version>
         </dependency>
 
         <dependency>
