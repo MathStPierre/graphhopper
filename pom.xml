@@ -47,6 +47,7 @@
         <connection>scm:git:git@github.com:MathStPierre/graphhopper.git</connection>
         <developerConnection>scm:git:git@github.com:MathStPierre/graphhopper.git</developerConnection>
         <url>git@github.com:MathStPierre/graphhopper.git</url>
+    <tag>release-test2</tag>
   </scm>
 
     <licenses>
@@ -88,6 +89,44 @@
         <module>web</module>
         <module>client-hc</module>
     </modules>
+    <profiles>
+        <profile>
+            <repositories>
+                <repository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>central</id>
+                    <name>libs-release</name>
+                    <url>https://curbside.jfrog.io/curbside/libs-release-local</url>
+                </repository>
+                <repository>
+                    <snapshots />
+                    <id>snapshots</id>
+                    <name>libs-snapshot</name>
+                    <url>https://curbside.jfrog.io/curbside/libs-snapshot-local</url>
+                </repository>
+            </repositories>
+            <pluginRepositories>
+                <pluginRepository>
+                    <snapshots>
+                        <enabled>false</enabled>
+                    </snapshots>
+                    <id>central</id>
+                    <name>plugins-release</name>
+                    <url>https://curbside.jfrog.io/curbside/plugins-release</url>
+                </pluginRepository>
+                <pluginRepository>
+                    <snapshots />
+                    <id>snapshots</id>
+                    <name>plugins-release</name>
+                    <url>https://curbside.jfrog.io/curbside/plugins-release</url>
+                </pluginRepository>
+            </pluginRepositories>
+            <id>artifactory</id>
+        </profile>
+    </profiles>
+
     <build>
         <plugins>
             <plugin>
@@ -159,10 +198,28 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <version>2.4.2</version>
                 <configuration>
-                    <tagNameFormat>v@{project.version}</tagNameFormat>
-                    <autoVersionSubmodules>true</autoVersionSubmodules>
-                    <releaseProfiles>release</releaseProfiles>
+<!--                    <tagNameFormat>${env.RELEASE_TAG}</tagNameFormat>-->
+                    <autoVersionSubmodules>false</autoVersionSubmodules>
+<!--                    <releaseProfiles>libs-release</releaseProfiles>-->
                 </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+                <version>3.2.1</version>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-javadoc-plugin</artifactId>
+                <version>3.2.0</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>2.8.2</version>
             </plugin>
 
 	    <!--

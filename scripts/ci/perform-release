@@ -8,14 +8,22 @@ abort() {
     exit 1
 }
 
+
+RELEASE_TAG=release-test2
+RELEASE_VERSION=1.4
+DEV_VERSION=1.5-SNAPSHOT
+
 # -- assertions (env/etc) --
 #[[ $(lein project-version) =~ SNAPSHOT ]] || abort "project must have SNAPSHOT version"
 [[ -n "${ARTIFACTORY_USER}" ]] || abort "missing ARTIFACTORY_USER"
 [[ -n "${ARTIFACTORY_PASS}" ]] || abort "missing ARTIFACTORY_PASS"
+[[ -n "${RELEASE_TAG}" ]] || abort "missing RELEASE_TAG"
+[[ -n "${RELEASE_VERSION}" ]] || abort "missing RELEASE_VERSION"
+[[ -n "${DEV_VERSION}" ]] || abort "missing DEV_VERSION"
 #[[ `git status --porcelain` ]] && abort "some git files are modified"
 
 # -- clean --
-mvn clean
+#mvn clean
 
 # -- prepare git precisely for release --
 #git config user.name curbsidebot
@@ -26,4 +34,5 @@ mvn clean
 
 # -- release! (will build jar, too) --
 mvn install -DskipTests
-mvn --batch-mode -Dtag=${RELEASE_TAG} -DpreparationGoals=clean release:prepare -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${DEV_VERSION}
+mvn -Dmaven.javadoc.skip=true --settings core/files/settings.xml --batch-mode -Dtag=${RELEASE_TAG} -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${DEV_VERSION} -DpreparationGoals=clean release:prepare  -Dmaven.javadoc.skip=true
+#mvn -Dmaven.javadoc.skip=true --settings core/files/settings.xml --batch-mode -Dtag=${RELEASE_TAG} -DdryRun=true -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${DEV_VERSION} -DpreparationGoals=clean release:prepare  -Dmaven.javadoc.skip=true

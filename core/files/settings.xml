@@ -19,22 +19,12 @@
   </servers>
   <profiles>
       <profile>
-        <id>ossrh</id>
-        <activation>
-          <activeByDefault>true</activeByDefault>
-        </activation>
-        <properties>
-          <gpg.executable>${env.GPG_EXECUTABLE}</gpg.executable>
-          <gpg.passphrase>${env.GPG_PASSPHRASE}</gpg.passphrase>
-        </properties>
-      </profile>
-      <profile>
           <repositories>
               <repository>
                   <snapshots>
                       <enabled>false</enabled>
                   </snapshots>
-                  <id>releases</id>
+                  <id>central</id>
                   <name>libs-release</name>
                   <url>https://curbside.jfrog.io/curbside/libs-release-local</url>
               </repository>
@@ -57,8 +47,8 @@
               <pluginRepository>
                   <snapshots />
                   <id>snapshots</id>
-                  <name>plugins-release</name>
-                  <url>https://curbside.jfrog.io/curbside/plugins-release</url>
+                  <name>plugins-snapshot</name>
+                  <url>https://curbside.jfrog.io/curbside/plugins-snapshot</url>
               </pluginRepository>
           </pluginRepositories>
           <id>artifactory</id>

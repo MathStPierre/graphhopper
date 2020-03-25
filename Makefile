@@ -2,9 +2,9 @@ GIT_SHA  = $(shell git rev-parse HEAD)
 GCP_PROJECT ?= graphhopper-s1-e3ec
 ARTIFACTORY_USER ?= user
 ARTIFACTORY_PASS ?= pass
-RELEASE_TAG = release-test2
-RELEASE_VERSION = 1.4
-DEV_VERSION = 1.5-SNAPSHOT
+RELEASE_TAG=release-test2
+RELEASE_VERSION=1.4
+DEV_VERSION=1.5-SNAPSHOT
 
 
 
