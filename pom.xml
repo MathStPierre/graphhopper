@@ -327,7 +327,7 @@
                         <artifactId>exec-maven-plugin</artifactId>
                         <version>1.4.0</version>
                         <configuration>
-                            <workingDirectory>./web/</workingDirectory>
+<!--                            <workingDirectory>./web</workingDirectory>-->
                             <!--                    &lt;!&ndash; where to install npm &ndash;&gt;-->
                             <!--                    <installDirectory>temp</installDirectory>-->
                         </configuration>
@@ -341,7 +341,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>npmbundle.sh</executable>
+                                    <executable>./web/npmbundle.sh</executable>
                                 </configuration>
                             </execution>
 <!--                            <execution>-->
