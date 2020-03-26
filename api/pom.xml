@@ -5,14 +5,14 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-api</artifactId>
     <packaging>jar</packaging>
-    <version>0.14-CURBSIDE-SNAPSHOT</version>
+    <version>0.14</version>
     <name>GraphHopper API</name>
     <description>Use the GraphHopper routing engine as a web-service</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.14-CURBSIDE-SNAPSHOT</version>
+        <version>0.14</version>
     </parent>
 
     <dependencies>
