@@ -1,2 +1,2 @@
 set -ex
-cd web && npm install && npm run bundleProduction && cd ..
+npm install && npm run bundleProduction
