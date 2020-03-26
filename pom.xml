@@ -341,7 +341,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./web/npmbundle.sh</executable>
+                                    <executable>./npmbundle.sh</executable>
                                 </configuration>
                             </execution>
 <!--                            <execution>-->
