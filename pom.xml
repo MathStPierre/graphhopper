@@ -163,6 +163,7 @@
                 <configuration>
 <!--                    <tagNameFormat>${env.RELEASE_TAG}</tagNameFormat>-->
                     <autoVersionSubmodules>false</autoVersionSubmodules>
+                    <releaseProfiles>web-bundle</releaseProfiles>
 <!--                    <releaseProfiles>libs-release</releaseProfiles>-->
                 </configuration>
                 <dependencies>
@@ -191,6 +192,39 @@
                 <artifactId>maven-deploy-plugin</artifactId>
                 <version>2.8.2</version>
             </plugin>
+
+<!--            <plugin>-->
+<!--                <groupId>com.github.eirslett</groupId>-->
+<!--                <artifactId>frontend-maven-plugin</artifactId>-->
+<!--                <version>1.6</version>-->
+<!--                <configuration>-->
+<!--                    <workingDirectory>./web/</workingDirectory>-->
+<!--&lt;!&ndash;                    &lt;!&ndash; where to install npm &ndash;&gt;&ndash;&gt;-->
+<!--&lt;!&ndash;                    <installDirectory>temp</installDirectory>&ndash;&gt;-->
+<!--                </configuration>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <id>npm-install</id>-->
+<!--                        <goals>-->
+<!--                            <goal>npm</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <arguments>install</arguments>-->
+<!--                        </configuration>-->
+<!--                        <phase></phase>-->
+<!--                    </execution>-->
+<!--                    <execution>-->
+<!--                        <id>npm-install</id>-->
+<!--                        <goals>-->
+<!--                            <goal>npm</goal>-->
+<!--                        </goals>-->
+<!--                        <configuration>-->
+<!--                            <arguments>install</arguments>-->
+<!--                        </configuration>-->
+<!--                        <phase></phase>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--            </plugin>-->
 
 	    <!--
             <plugin>
@@ -242,6 +276,56 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>web-bundle</id>
+            <build>
+                <plugins>
+                    <!--                  <plugin>-->
+                    <!--                      <groupId>org.codehaus.mojo</groupId>-->
+                    <!--                      <artifactId>exec-maven-plugin</artifactId>-->
+                    <!--                      <version>1.4.0</version>-->
+                    <!--                      <configuration>-->
+                    <!--                          &lt;!&ndash; here your default configuration &ndash;&gt;-->
+                    <!--                      </configuration>-->
+                    <!--                  </plugin>-->
+
+                    <plugin>
+                        <groupId>com.github.eirslett</groupId>
+                        <artifactId>frontend-maven-plugin</artifactId>
+                        <version>1.6</version>
+                        <configuration>
+                            <workingDirectory>./web/</workingDirectory>
+                            <!--                    &lt;!&ndash; where to install npm &ndash;&gt;-->
+                            <!--                    <installDirectory>temp</installDirectory>-->
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>npm-install</id>
+                                <goals>
+                                    <goal>npm</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>install</arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>npm-install</id>
+                                <goals>
+                                    <goal>npm</goal>
+                                </goals>
+                                <configuration>
+                                    <arguments>run bundleProduction</arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
 
     <distributionManagement>
         <repository>
