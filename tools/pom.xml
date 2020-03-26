@@ -4,14 +4,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-tools</artifactId>
-    <version>1.5-SNAPSHOT</version>
+    <version>0.02</version>
     <packaging>jar</packaging>
     <name>GraphHopper Tools</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>1.5-SNAPSHOT</version>
+        <version>0.02</version>
     </parent>
 
     <dependencies>
