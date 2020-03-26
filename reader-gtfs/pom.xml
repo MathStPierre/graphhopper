@@ -4,14 +4,14 @@
 
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-reader-gtfs</artifactId>
-    <version>0.15-CURBSIDE-SNAPSHOT</version>
+    <version>0.15</version>
     <packaging>jar</packaging>
     <name>GraphHopper Reader for Gtfs Data</name>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.15-CURBSIDE-SNAPSHOT</version>
+        <version>0.15</version>
     </parent>
 
     <dependencies>
