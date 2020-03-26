@@ -15,13 +15,12 @@ DEV_VERSION=${DEV_VERSION:=0.03-CURBSIDE-SNAPSHOT}
 # -- assertions (env/etc) --
 [[ -n "${ARTIFACTORY_USER}" ]] || abort "missing ARTIFACTORY_USER"
 [[ -n "${ARTIFACTORY_PASS}" ]] || abort "missing ARTIFACTORY_PASS"
-[[ `git status --porcelain` ]] && abort "some git files are modified"
 
 # -- Remove all possible leftovers related to previous release --
 mvn release:clean
 
 # -- Ensure that the code is building properly before tagging it for release --
-mvn clean build -DskipTests
+mvn clean install -DskipTests
 
 # -- prepare the release --
 mvn --settings core/files/settings.xml --batch-mode -Dtag=${RELEASE_TAG} -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${DEV_VERSION} -DpreparationGoals=clean release:prepare
