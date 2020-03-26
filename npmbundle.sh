@@ -1,2 +1,4 @@
 set -ex
-cd ./web && npm install && npm run bundleProduction
+path=`pwd`
+echo $path
+cd $path/web && npm install && npm run bundleProduction
