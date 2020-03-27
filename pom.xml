@@ -5,7 +5,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.40-CURBSIDE-SNAPSHOT</version>
+    <version>0.32-CURBSIDE-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -165,8 +165,6 @@
                     <autoVersionSubmodules>false</autoVersionSubmodules>
 <!--                    <releaseProfiles>web-bundle</releaseProfiles>-->
 <!--                    <releaseProfiles>libs-release</releaseProfiles>-->
-                    <arguments>${myReleaseArgs}</arguments>
-
                 </configuration>
                 <dependencies>
                     <dependency>
