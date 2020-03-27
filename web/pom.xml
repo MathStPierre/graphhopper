@@ -175,7 +175,7 @@
                                     <goal>exec</goal>
                                 </goals>
                                 <configuration>
-                                    <executable>./npmbundle.sh</executable>
+                                    <executable>./web/npmbundle.sh</executable>
                                 </configuration>
                             </execution>
                             <!--                            <execution>-->
