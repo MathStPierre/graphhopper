@@ -26,4 +26,8 @@ mvn clean install -DskipTests
 mvn --settings core/files/settings.xml --batch-mode -Dtag=${RELEASE_TAG} -DreleaseVersion=${RELEASE_VERSION} -DdevelopmentVersion=${DEV_VERSION} -DpreparationGoals=clean release:prepare
 
 # -- do the release --
-mvn --settings core/files/settings.xml  release:perform  -Darguments="-DskipTests" -Pweb-bundle
+mvn --settings core/files/settings.xml  release:perform   -DmyReleaseArgs="-Pweb-bundle -DskipTests=true" -Pweb-bundle -DskipTests=true
+
+
+#mvn release:prepare release:perform -DmyReleaseArgs="-Pmy-release -DskipTests=true" -Pmy-release -DskipTests=true
+

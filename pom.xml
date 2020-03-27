@@ -165,6 +165,8 @@
                     <autoVersionSubmodules>false</autoVersionSubmodules>
 <!--                    <releaseProfiles>web-bundle</releaseProfiles>-->
 <!--                    <releaseProfiles>libs-release</releaseProfiles>-->
+                    <arguments>${myReleaseArgs}</arguments>
+
                 </configuration>
                 <dependencies>
                     <dependency>
