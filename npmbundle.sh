@@ -1,4 +1,7 @@
 set -ex
-path=`pwd`
-echo $path
-cd $path/web && npm install && npm run bundleProduction
+PATH=`pwd`
+echo $PATH
+if  [[ $PATH == *checkout ]] ;
+then
+    cd $PATH/web && npm install && npm run bundleProduction
+fi
