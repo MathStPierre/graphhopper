@@ -5,14 +5,14 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-isochrone</artifactId>
     <packaging>jar</packaging>
-    <version>0.46</version>
+    <version>0.47-CURBSIDE-SNAPSHOT</version>
     <name>GraphHopper Isochrone</name>
     <description>Isochrone calculation with GraphHopper</description>
 
     <parent>
         <groupId>com.graphhopper</groupId>
         <artifactId>graphhopper-parent</artifactId>
-        <version>0.46</version>
+        <version>0.47-CURBSIDE-SNAPSHOT</version>
     </parent>
 
     <dependencies>
