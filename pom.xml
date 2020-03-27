@@ -227,34 +227,34 @@
             </plugin>
         </plugins>
     </build>
-<!--    <profiles>-->
-<!--        <profile>-->
-<!--            <id>web-bundle</id>-->
-<!--            <build>-->
-<!--                <plugins>-->
-<!--                    <plugin>-->
-<!--                        <groupId>org.codehaus.mojo</groupId>-->
-<!--                        <artifactId>exec-maven-plugin</artifactId>-->
-<!--                        <version>1.4.0</version>-->
-<!--                        <configuration>-->
-<!--                        </configuration>-->
-<!--                        <executions>-->
-<!--                            <execution>-->
-<!--                                <id>npm-install</id>-->
-<!--                                <phase>compile</phase>-->
-<!--                                <goals>-->
-<!--                                    <goal>exec</goal>-->
-<!--                                </goals>-->
-<!--                                <configuration>-->
-<!--                                    <executable>./npmbundle.sh</executable>-->
-<!--                                </configuration>-->
-<!--                            </execution>-->
-<!--                        </executions>-->
-<!--                    </plugin>-->
-<!--                </plugins>-->
-<!--            </build>-->
-<!--        </profile>-->
-<!--    </profiles>-->
+    <profiles>
+        <profile>
+            <id>web-bundle</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>1.4.0</version>
+                        <configuration>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>npm-install</id>
+                                <phase>compile</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>./npmbundle.sh</executable>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <distributionManagement>
         <repository>
