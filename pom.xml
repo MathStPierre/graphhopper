@@ -163,8 +163,10 @@
                 <configuration>
 <!--                    <tagNameFormat>${env.RELEASE_TAG}</tagNameFormat>-->
                     <autoVersionSubmodules>false</autoVersionSubmodules>
-<!--                    <releaseProfiles>web-bundle</releaseProfiles>-->
-<!--                    <releaseProfiles>libs-release</releaseProfiles>-->
+                    <releaseProfiles>web-bundle</releaseProfiles>
+                    <arguments>${myReleaseArgs}</arguments>
+
+                    <!--                    <releaseProfiles>libs-release</releaseProfiles>-->
                 </configuration>
                 <dependencies>
                     <dependency>
