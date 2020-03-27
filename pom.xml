@@ -5,7 +5,7 @@
     <groupId>com.graphhopper</groupId>
     <artifactId>graphhopper-parent</artifactId>
     <name>GraphHopper Parent Project</name>
-    <version>0.32</version>
+    <version>0.32-CURBSIDE-SNAPSHOT</version>
     <packaging>pom</packaging>
     <url>https://www.graphhopper.com</url>
     <inceptionYear>2012</inceptionYear>
@@ -47,7 +47,7 @@
         <connection>scm:git:git@github.com:MathStPierre/graphhopper.git</connection>
         <developerConnection>scm:git:git@github.com:MathStPierre/graphhopper.git</developerConnection>
         <url>git@github.com:MathStPierre/graphhopper.git</url>
-    <tag>release-test-0-32</tag>
+    <tag>release-test-0-15</tag>
   </scm>
 
     <licenses>
