@@ -260,7 +260,7 @@ public final class PtRouteResource {
             GtfsStorage.EdgeType edgeType = reverse ? GtfsStorage.EdgeType.EXIT_PT : GtfsStorage.EdgeType.ENTER_PT;
             MultiCriteriaLabelSetting stationRouter = new MultiCriteriaLabelSetting(accessEgressGraphExplorer, ptEncodedValues, reverse, false, false, false, maxVisitedNodesForRequest, new ArrayList<>());
             stationRouter.setBetaWalkTime(betaWalkTime);
-            stationRouter.setLimitStreetTime(limitStreetTime);
+            //stationRouter.setLimitStreetTime(limitStreetTime);
             Iterator<Label> stationIterator = stationRouter.calcLabels(destNode, initialTime, blockedRouteTypes).iterator();
             List<Label> stationLabels = new ArrayList<>();
             while (stationIterator.hasNext()) {
@@ -270,6 +270,7 @@ public final class PtRouteResource {
                     break;
                 } else if (label.edge != -1 && queryGraph.getEdgeIteratorState(label.edge, label.parent.adjNode).get(ptEncodedValues.getTypeEnc()) == edgeType) {
                     stationLabels.add(label);
+                    stationRouter.setLimitStreetTime(limitStreetTime);
                 }
             }
             visitedNodes += stationRouter.getVisitedNodes();
@@ -287,7 +288,7 @@ public final class PtRouteResource {
             final long smallestStationLabelWalkTime = stationLabels.stream()
                     .mapToLong(l -> l.walkTime).min()
                     .orElse(Long.MAX_VALUE);
-            router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
+//            router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
             final long smallestStationLabelWeight;
             if (!stationLabels.isEmpty()) {
                 smallestStationLabelWeight = stationRouter.weight(stationLabels.get(0));
@@ -297,10 +298,17 @@ public final class PtRouteResource {
             Iterator<Label> iterator = router.calcLabels(startNode, initialTime, blockedRouteTypes).iterator();
             Map<Label, Label> originalSolutions = new HashMap<>();
 
+            GtfsStorage.EdgeType forwardEdgeType = reverse ? GtfsStorage.EdgeType.ENTER_PT : GtfsStorage.EdgeType.EXIT_PT;
+
             Label walkSolution = null;
             long highestWeightForDominationTest = Long.MAX_VALUE;
             while (iterator.hasNext()) {
                 Label label = iterator.next();
+
+                //Limit the walking path search once a station is reached
+                if (label.edge != -1 && queryGraph.getEdgeIteratorState(label.edge, label.parent.adjNode).get(ptEncodedValues.getTypeEnc()) == forwardEdgeType) {
+                    router.setLimitStreetTime(Math.max(0, limitStreetTime - smallestStationLabelWalkTime));
+                }
                 // For single-criterion or pareto queries, we run to the end.
                 //
                 // For profile queries, we need a limited time window. Limiting the number of solutions is not
